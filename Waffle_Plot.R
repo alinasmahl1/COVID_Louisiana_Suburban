@@ -60,11 +60,13 @@ waffle(waffle$case_peaks)
       map_df(seq_len(length(unique(.$peaks))), ~expand.grid(y = 1:10, x = 1:10))
     )
   plot<-ggplot(final, aes(x, y)) + 
-    geom_tile(aes(fill=nola_geo), color="white", size=0.5) +
+    geom_tile(aes(fill=nola_geo), color=c("white"), size=0.5) +
     facet_wrap(~peaks) +
+    scale_fill_manual(values=c("#66C2A5", "#FC8D62", "#8DA0CB" ,"#E78AC3")) +
     coord_equal() +
     labs(x=NULL, y = NULL) +
     theme_void()+
-    theme(axis.text=element_blank()) 
+    theme(axis.text=element_blank(), 
+          legend.title = element_blank()) 
   plot
   
