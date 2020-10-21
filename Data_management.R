@@ -14,20 +14,19 @@ library(rgdal)
 library(broom)
 library(sf)
 library(spdep)
-<<<<<<< HEAD
+
 setwd("/Users/2/OneDrive - Drexel University/Alina Research/Research/Mapping Covid in Louisianna/Data")
 setwd("/Users/usamabilal/OneDrive - Drexel University/COVID Quick Analyses/COVID_Louisiana_Suburban/data")
-=======
+
 library(forcats)
 library(rmapshaper)
 library(maps)
 setwd("/Users/2/OneDrive - Drexel University/Alina Research/Research/Mapping Covid in Louisianna/Data")
 setwd("/Users/usamabilal/OneDrive - Drexel University/COVID Quick Analyses/COVID_Louisiana_Suburban")
->>>>>>> 79d8e5e2093aee04968ee814e5cd43533813ae3a
 #---------------------------------------------------------------------------#
 #import RUCA data 
 # have already downloaded data and converted to CSV
-ruca<-read.csv("ruca2010revised.csv",  header=TRUE, stringsAsFactors = FALSE)
+ruca<-read.csv("data/ruca2010revised.csv",  header=TRUE, stringsAsFactors = FALSE)
 str(ruca)
 head(ruca)
 
@@ -42,7 +41,7 @@ ruca1<- ruca %>% rename(county_fips=State.County.FIPS.Code, state=Select.State, 
 #---------------------------------------------------------------------------#
 #import RUCC data 
 # have already downloaded data and converted to CSV
-rucc_county<-read.csv("Data/ruralurbancodes2013.csv",  header=TRUE, stringsAsFactors = FALSE)
+rucc_county<-read.csv("data/ruralurbancodes2013.csv",  header=TRUE, stringsAsFactors = FALSE)
 rucc_county
 str(rucc_county)
 head(rucc_county)
@@ -53,11 +52,10 @@ rucc_county1<-rucc_county %>% rename(county_fips=FIPS, state=State, county=Count
 #---------------------------------------------------------------------------#
 #import Louisiana covid data 
 # have already downloaded data and converted to CSV
-<<<<<<< HEAD
-la_covid<-read.csv("LA_COVID_TESTBYWEEK_TRACT_PUBLICUSE (2).csv",  header=TRUE, stringsAsFactors = FALSE)
-=======
-la_covid<-read.csv("Data/LA_COVID_TESTBYWEEK_TRACT_PUBLICUSE (2).csv",  header=TRUE, stringsAsFactors = FALSE)
->>>>>>> 79d8e5e2093aee04968ee814e5cd43533813ae3a
+
+la_covid<-read.csv("data/LA_COVID_TESTBYWEEK_TRACT_PUBLICUSE (2).csv",  header=TRUE, stringsAsFactors = FALSE)
+
+la_covid<-read.csv("data/LA_COVID_TESTBYWEEK_TRACT_PUBLICUSE (2).csv",  header=TRUE, stringsAsFactors = FALSE)
 la_covid
 str(la_covid)
 head(la_covid)
@@ -94,7 +92,7 @@ table(checkfull$number)
 #import covid parish level cases + deaths (by race!) available through sept 28th 
 # only parishes with 25 + deaths included 
 
-deaths<-read.csv("Cases and Deaths by Race by Parish.csv", header=TRUE)
+deaths<-read.csv("data/Cases and Deaths by Race by Parish.csv", header=TRUE)
 
 #rename vars--- likely need to change name of the Parish.FIPs to the same name as the RUCC FIPS
 deaths1<- deaths %>%
@@ -169,7 +167,7 @@ acs_data_county1<-acs_data_county %>%
 #---------------------------------------------------------------------------------
 #import the CDC SVI: 
 #---------------------------------------------------------------------------------
-SVI<-read.csv("Louisiana.csv", header=TRUE)
+SVI<-read.csv("data/Louisiana.csv", header=TRUE)
 
 #limit dataset to only the vars we care about 
 SVI1<-SVI %>%
