@@ -38,6 +38,28 @@ figure1<-ggplot(dta_f1, aes(x=month, y=value)) +
         legend.text=element_text(color="black", size=14))
 figure1
 ggsave(figure1, file="Results/Figure1.pdf", width=10, height=5)
+#figure 1 repeated for mortality 
+
+dta_f1<-final_deaths_geo %>% 
+  select(nola_geo1, month, death_rate) %>%
+  mutate(month=factor(month), 
+         month=mdy(paste0(month, "-01-2020")))
+figure3<-ggplot(dta_f1, aes(x=month, y=death_rate)) +
+  geom_line(aes(color=nola_geo1)) +
+  scale_color_brewer(type="qual", palette=2, name="")+
+  scale_x_date(breaks="1 month", date_labels ="%b")+
+  scale_y_continuous(limits=c(0, NA))+#, sec.axis = dup_axis())+
+  labs(x="", y="death rate per 100,000")+
+  theme_bw()+
+  theme(axis.text=element_text(color="black", size=14),
+        axis.title=element_text(color="black", size=16, face="bold"),
+        strip.background = element_blank(),
+        strip.text =element_text(color="black", size=16, face="bold"),
+        legend.position = "bottom",
+        legend.text=element_text(color="black", size=14))
+figure3
+ggsave(figur3, file="Results/Figure3.pdf", width=10, height=5)
+
 # figure 1 v2
 dta_f1b<-final_nola_geo %>% 
   mutate(month=case_when(month%in%(3:4)~"First", 
@@ -67,12 +89,9 @@ figure1b<-ggplot(dta_f1b, aes(x=month, y=value)) +
   scale_color_brewer(type="qual", palette=2, name="")+
   scale_fill_brewer(type="qual", palette=2, name="")+
   scale_y_continuous(limits=c(0, NA))+#, sec.axis = dup_axis())+
-<<<<<<< HEAD
   labs(x="", y="Testing/incidence rate per 10,000\or positivity ratio (%)",
        title="Figure 1: COVID-19 outcomes by geography in Lousiana")+
-=======
   labs(x="", y="Incidence rate per 10,000 or positivity ratio (%)")+
->>>>>>> 79d8e5e2093aee04968ee814e5cd43533813ae3a
   facet_wrap(~name, scales = "free_y") +
   theme_bw()+
   theme(axis.text=element_text(color="black", size=14),
@@ -88,7 +107,7 @@ ggsave(figure1b, file="Results/Figure1b.pdf", width=15, height=6)
 #final figure 
 dta_f1c<-final_nola_geo %>% 
   mutate(month=case_when(month%in%(3:4)~"First", 
-                         montsh%in%(5:6)~"Valley",
+                         month%in%(5:6)~"Valley",
                          month%in%(7:9)~"Second")) %>% 
   group_by(nola_geo, month) %>% 
   summarise(cases=sum(cases),
@@ -124,9 +143,42 @@ figure1c<-ggplot(dta_f1c, aes(x=month, y=value)) +
         legend.text=element_text(color="black", size=14))
 figure1c
 ggsave(figure1c, file="/Results/Figure1c.pdf", width=15, height=6)
-
 #
 ggplotly(figure1c)
+
+#repeated for mortality 
+dta_f3c<-final_deaths_geo %>% 
+  mutate(month1=case_when(month%in%(3:4)~"First", 
+                          month%in%(5:6)~"Valley",
+                          month%in%(7:9)~"Second")) %>%
+  group_by(nola_geo1, month1) %>% 
+  summarise(death=sum(death_geo),
+            pop=sum(geo_pop)) %>% 
+  mutate( death_rate1=death/pop*100000,
+          month1=factor(month1, levels=c("First", "Valley", "Second"),
+                        labels=c("First wave\n(March-April)",
+                                 "Re-opening\n(May-June)",
+                                 "Second wave\n(July-September)")))
+
+figure1d_mort<-ggplot(dta_f3c, aes(x=month1, y=death_rate1)) +
+  geom_line(aes(color=nola_geo1, group=nola_geo1)) +
+  geom_point(aes(fill=nola_geo1), color="black", pch=21,size=2)+
+  scale_color_brewer(type="qual", palette=2, name="")+
+  scale_fill_brewer(type="qual", palette=2, name="")+
+  scale_y_continuous(limits=c(0, NA))+#, sec.axis = dup_axis())+
+  labs(x="", y="Death rate per 100,000 ",
+       title="Figure 3: COVID-19 deaths by geography in Lousiana")+
+  theme_bw()+
+  theme(axis.text=element_text(color="black", size=14),
+        axis.title=element_text(color="black", size=16, face="bold"),
+        plot.title=element_text(color="black", size=20, face="bold"),
+        strip.background = element_blank(),
+        strip.text =element_text(color="black", size=16, face="bold"),
+        legend.position = "bottom",
+        legend.text=element_text(color="black", size=14))
+figure1d_mort
+ggsave(figure1d_mort, file="/Results/Figure3_mort.pdf", width=15, height=6)
+ggplotly(figure1d_mort)
 
 # figure 2: EDA
 #scatter plots 
@@ -200,13 +252,14 @@ figure2<-ggplot(quintiles %>% filter(!is.na(month)), aes(x=svi_q, y=value)) +
         legend.text=element_text(color="black", size=14))
 figure2
 ggsave(figure2, file="Results/Figure2.pdf", width=12, height=10)
-<<<<<<< HEAD
+
 ggplotly(figure2)
 
-=======
+
 
 # NOT USED BELOW
->>>>>>> 79d8e5e2093aee04968ee814e5cd43533813ae3a
+
+
 # figure 3
 dta_f3<-final_tract %>% group_by(month, nola_geo) %>% 
   group_modify(~{
