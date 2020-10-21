@@ -318,26 +318,32 @@ final_tract<-la_covid2 %>%
 final_acs_county<-acs_data_county1 %>%
   left_join(rucc_LA1)%>%
   select(county_fips, county_pop_2018, nola_geo1)
-final_deaths<-deaths1 %>% 
+final_deaths_county<-deaths1 %>% 
   left_join(final_acs_county)%>% 
   mutate(death_rate=deaths/county_pop_2018*100000)%>%
-    select(parish, deaths, month, death_rate, nola_geo1)
-
+    select(parish, deaths, month, death_rate, nola_geo1, county_pop_2018)
+final_deaths_geo<-final_deaths_county%>%
+  group_by(month, nola_geo1)%>%
+  summarize(death_geo=sum(deaths),
+            geo_pop=sum(county_pop_2018))%>%
+  mutate(death_rate=death_geo/geo_pop*100000)
 
 
 summary(final_nola_geo)
 summary(final_tract)
-summary(final_deaths)
+summary(final_deaths_county)
+summary(final_deaths_geo)
 
 save(final_nola_geo,
      final_tract,
-     final_deaths,file="final_data.rdata")
+     final_deaths_county,
+     final_deaths_geo, file="final_data.rdata")
 #save df w/ total deaths by geo
 sum_county<-final_acs_county%>%
   group_by(nola_geo1)%>%
   summarise(geo_pop=sum(county_pop_2018))
 
-final_deaths1<-deaths1 %>% 
+final_deaths_couny1<-deaths1 %>% 
   left_join(rucc_LA1)%>% 
    group_by(nola_geo1) %>%
   summarise(deaths_total=sum(deaths, na.rm=T)) %>%
