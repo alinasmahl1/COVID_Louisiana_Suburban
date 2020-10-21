@@ -14,7 +14,8 @@ library(rgdal)
 library(broom)
 library(sf)
 library(spdep)
-
+library(stringr)
+getwd()
 setwd("/Users/2/OneDrive - Drexel University/Alina Research/Research/Mapping Covid in Louisianna/Data")
 setwd("/Users/usamabilal/OneDrive - Drexel University/COVID Quick Analyses/COVID_Louisiana_Suburban/data")
 
@@ -26,7 +27,7 @@ setwd("/Users/usamabilal/OneDrive - Drexel University/COVID Quick Analyses/COVID
 #---------------------------------------------------------------------------#
 #import RUCA data 
 # have already downloaded data and converted to CSV
-ruca<-read.csv("data/ruca2010revised.csv",  header=TRUE, stringsAsFactors = FALSE)
+ruca<-read.csv("ruca2010revised.csv",  header=TRUE, stringsAsFactors = FALSE)
 str(ruca)
 head(ruca)
 
@@ -41,7 +42,7 @@ ruca1<- ruca %>% rename(county_fips=State.County.FIPS.Code, state=Select.State, 
 #---------------------------------------------------------------------------#
 #import RUCC data 
 # have already downloaded data and converted to CSV
-rucc_county<-read.csv("data/ruralurbancodes2013.csv",  header=TRUE, stringsAsFactors = FALSE)
+rucc_county<-read.csv("ruralurbancodes2013.csv",  header=TRUE, stringsAsFactors = FALSE)
 rucc_county
 str(rucc_county)
 head(rucc_county)
@@ -53,9 +54,7 @@ rucc_county1<-rucc_county %>% rename(county_fips=FIPS, state=State, county=Count
 #import Louisiana covid data 
 # have already downloaded data and converted to CSV
 
-la_covid<-read.csv("data/LA_COVID_TESTBYWEEK_TRACT_PUBLICUSE (2).csv",  header=TRUE, stringsAsFactors = FALSE)
-
-la_covid<-read.csv("data/LA_COVID_TESTBYWEEK_TRACT_PUBLICUSE (2).csv",  header=TRUE, stringsAsFactors = FALSE)
+la_covid<-read.csv("LA_COVID_TESTBYWEEK_TRACT_PUBLICUSE (2).csv",  header=TRUE, stringsAsFactors = FALSE)
 la_covid
 str(la_covid)
 head(la_covid)
@@ -89,33 +88,43 @@ table(checkfull$number)
 #all ct's have 7 months so no need to set to zero.
 
 #----------------------------------------------------------------------------
-#import covid parish level cases + deaths (by race!) available through sept 28th 
-# only parishes with 25 + deaths included 
+#import covid parish level cases + deaths from Johns Hopkins 
 
-deaths<-read.csv("data/Cases and Deaths by Race by Parish.csv", header=TRUE)
+deaths_jh<-fread("time_series_covid19_deaths_US.csv", header=TRUE) %>%
+  subset(Province_State=="Louisiana")%>%
+  #only keep vars we'll need, drop obs after oct. 
+  select(c(FIPS, Admin2, "3/31/20", "4/30/20", "5/31/20", "6/30/20", "7/31/20", "8/31/20", "9/30/20"))%>%
+#remove observation w/ unassigned 
+   subset(Admin2!="Out of LA")
 
-#rename vars--- likely need to change name of the Parish.FIPs to the same name as the RUCC FIPS
-deaths1<- deaths %>%
-  rename(parish=Parish, deaths_black=Deaths...Black, deaths_white=Deaths...White,
-         deaths_other=Deaths...Other, deaths_unknown=Deaths...Unknown, 
-         cases_black=Cases...Black, cases_white=Cases...White, cases_other=Cases...Other, 
-         cases_unknown=Cases...Unknown, pop_black=X2018.Population...Black, pop_white=X2018.Population...White, pop_other=X2018.Population...Other, 
-         county_fips=Parish.FIPS) %>% 
-  mutate(total_cases_county=cases_black + cases_white + cases_other + cases_unknown, 
-         total_deaths=deaths_black + deaths_white + deaths_other + deaths_unknown,
-         pop_total_county=pop_white +pop_black+ pop_other, 
-         total_case_rate=total_cases_county/pop_total_county*100000, 
-         black_case_rate=cases_black/pop_black*100000,
-         white_case_rate=cases_white/pop_white*100000, 
-         other_case_rate=cases_other/pop_other*100000, 
-         total_death_rate=total_deaths/pop_total_county*100000, 
-         black_death_rate=deaths_black/pop_black*100000,
-         white_death_rate=deaths_white/pop_white*100000, 
-         other_death_rate=deaths_other/pop_other*100000 
-  ) %>%
-  ungroup()
-head(deaths1)
-rm(deaths)
+deaths_jh1<- deaths_jh %>%
+  rename(parish=Admin2, county_fips=FIPS, march="3/31/20", april="4/30/20", may="5/31/20", june="6/30/20",
+                       july="7/31/20", august="8/31/20", september="9/30/20")%>%
+         group_by(parish)%>%
+           mutate(deaths_3=march,
+                  deaths_4=april-march, 
+                  deaths_5=may-april, 
+                  deaths_6=june-may, 
+                  deaths_7=july-june, 
+                  deaths_8=august-july, 
+                  deaths_9=september-august)%>%
+  select(c(parish, county_fips,  deaths_3:deaths_9)) %>%
+#remove row with data from unassigned county (n=190)
+  subset(parish!="Unassigned")
+
+deaths1<-deaths_jh1%>%
+  pivot_longer(!c(county_fips, parish), names_to="date",  
+                          values_to="deaths")%>%
+  #not efficient way to recode names in deaths to month numbers...
+  mutate(month=case_when(date=="deaths_3" ~3, 
+                         date=="deaths_4"~4,
+                         date=="deaths_5"~5,
+                         date=="deaths_6"~6,
+                         date=="deaths_7"~7,
+                         date=="deaths_8"~8,
+                         date=="deaths_9"~9)) %>%
+  select(-date) 
+
 
 #---------------------------------------------------------------------------#
 
@@ -162,12 +171,13 @@ acs_data_county1<-acs_data_county %>%
   pivot_wider(id_cols = c(GEOID, NAME), names_from=variable,  
               values_from=c(estimate)) %>%
   rename(county_fips=GEOID) %>% 
-  mutate(county_fips=as.numeric(county_fips))
+  mutate(county_fips=as.numeric(county_fips))%>%
+  select(c(county_fips, county_pop_2018 ))
 
 #---------------------------------------------------------------------------------
 #import the CDC SVI: 
 #---------------------------------------------------------------------------------
-SVI<-read.csv("data/Louisiana.csv", header=TRUE)
+SVI<-read.csv("Louisiana.csv", header=TRUE)
 
 #limit dataset to only the vars we care about 
 SVI1<-SVI %>%
@@ -304,17 +314,16 @@ final_tract<-la_covid2 %>%
          positivity_ratio=positives/tests) %>% 
   left_join(ruca_LA1) %>% 
   left_join(SVI1)
-# and the race disparities dataset
-#remove the parish under investigation cases (b.c no geography) 
-final_deaths<-deaths1 %>% filter(parish!="Parish Under Investigation") %>% 
+# and the deaths dataset
+final_acs_county<-acs_data_county1 %>%
   left_join(rucc_LA1)%>%
-  group_by(nola_geo1) %>% 
-  summarise(deaths_black=sum(deaths_black, na.rm=T),
-            deaths_white=sum(deaths_white, na.rm=T),
-            pop_black=sum(pop_black, na.rm=T),
-            pop_white=sum(pop_white, na.rm=T)) %>% 
-  mutate(rate_black=deaths_black/pop_black*100000,
-         rate_white=deaths_white/pop_white*100000)
+  select(county_fips, county_pop_2018, nola_geo1)
+final_deaths<-deaths1 %>% 
+  left_join(final_acs_county)%>% 
+  mutate(death_rate=deaths/county_pop_2018*100000)%>%
+    select(parish, deaths, month, death_rate, nola_geo1)
+
+
 
 summary(final_nola_geo)
 summary(final_tract)
@@ -323,7 +332,15 @@ summary(final_deaths)
 save(final_nola_geo,
      final_tract,
      final_deaths,file="final_data.rdata")
-#save df w/ deaths by county + RUCC for age adjusted analysis
-final_deaths1<-deaths1 %>% filter(parish!="Parish Under Investigation") %>% 
-  left_join(rucc_LA1)
+#save df w/ total deaths by geo
+sum_county<-final_acs_county%>%
+  group_by(nola_geo1)%>%
+  summarise(geo_pop=sum(county_pop_2018))
+
+final_deaths1<-deaths1 %>% 
+  left_join(rucc_LA1)%>% 
+   group_by(nola_geo1) %>%
+  summarise(deaths_total=sum(deaths, na.rm=T)) %>%
+left_join(sum_county) %>%
+mutate(death_rate_total=deaths_total/geo_pop*100000)
 save(final_deaths1, file="final_deaths1.Rdata")
