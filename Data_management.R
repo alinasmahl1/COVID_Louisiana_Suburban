@@ -14,16 +14,15 @@ library(rgdal)
 library(broom)
 library(sf)
 library(spdep)
-<<<<<<< HEAD
+
 setwd("/Users/2/OneDrive - Drexel University/Alina Research/Research/Mapping Covid in Louisianna/Data")
 setwd("/Users/usamabilal/OneDrive - Drexel University/COVID Quick Analyses/COVID_Louisiana_Suburban/data")
-=======
+
 library(forcats)
 library(rmapshaper)
 library(maps)
-setwd("/Users/2/OneDrive - Drexel University/Alina Research/Research/Mapping Covid in Louisianna/Data")
+setwd("/Users/2/Desktop/COVID_Louisiana_Suburban")
 setwd("/Users/usamabilal/OneDrive - Drexel University/COVID Quick Analyses/COVID_Louisiana_Suburban")
->>>>>>> 79d8e5e2093aee04968ee814e5cd43533813ae3a
 #---------------------------------------------------------------------------#
 #import RUCA data 
 # have already downloaded data and converted to CSV
