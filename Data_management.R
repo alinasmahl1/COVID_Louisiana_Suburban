@@ -21,7 +21,7 @@ setwd("/Users/usamabilal/OneDrive - Drexel University/COVID Quick Analyses/COVID
 library(forcats)
 library(rmapshaper)
 library(maps)
-setwd("/Users/2/Desktop/COVID_Louisiana_Suburban")
+setwd("/Users/2/OneDrive - Drexel University/Alina Research/Research/Mapping Covid in Louisianna/Data")
 setwd("/Users/usamabilal/OneDrive - Drexel University/COVID Quick Analyses/COVID_Louisiana_Suburban")
 #---------------------------------------------------------------------------#
 #import RUCA data 
