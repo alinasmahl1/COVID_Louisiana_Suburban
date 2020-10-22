@@ -200,6 +200,12 @@ final_tract %>%
   geom_smooth(method="loess", se=FALSE, fullrange=TRUE) +
   scale_y_log10()+annotation_logticks(sides="l")+
   facet_wrap(.~month, scales="free_y")
+final_deaths_county %>%
+  ggplot(aes(x=RPL_THEMES, y=death_rate, color=nola_geo1)) + 
+  geom_point()+
+  geom_smooth(method="loess", se=FALSE, fullrange=TRUE) +
+  scale_y_log10()+annotation_logticks(sides="l")+
+  facet_wrap(.~month, scales="free_y")
 
 # urbanicity-specific quintiles
 quintiles<-full_join(final_tract, final_tract %>% filter(month==5) %>% 
