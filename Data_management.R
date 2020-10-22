@@ -337,7 +337,7 @@ final_deaths_county<-deaths1 %>%
   left_join(final_acs_county)%>% 
   mutate(death_rate=deaths/county_pop_2018*100000)%>%
   left_join(svi_county1) %>%
-    select(parish, deaths, month, death_rate, nola_geo1, county_pop_2018, RPL_THEME1:RPL_THEMES)
+    select(parish, county_fips, deaths, month, death_rate, nola_geo1, county_pop_2018, RPL_THEME1:RPL_THEMES)
 
 final_deaths_geo<-final_deaths_county%>%
   group_by(month, nola_geo1)%>%
