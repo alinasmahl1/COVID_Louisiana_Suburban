@@ -191,6 +191,21 @@ SVI1<-SVI %>%
          RPL_THEME4=ifelse(RPL_THEME4==-999, NA, RPL_THEME4)) %>% 
   mutate_at(-1, scale)
 head(SVI1)
+
+#import the county level SVI
+svi_county<-fread("Louisiana_COUNTY.csv")
+
+svi_county1<-svi_county %>%
+  subset(select=c(FIPS,RPL_THEME1, RPL_THEME2, RPL_THEME3, RPL_THEME4, RPL_THEMES )) %>%
+  rename(county_fips=FIPS) %>% 
+  # deal with missing values
+  mutate(RPL_THEMES=ifelse(RPL_THEMES==-999, NA, RPL_THEMES),
+         RPL_THEME1=ifelse(RPL_THEME1==-999, NA, RPL_THEME1),
+         RPL_THEME2=ifelse(RPL_THEME2==-999, NA, RPL_THEME2),
+         RPL_THEME3=ifelse(RPL_THEME3==-999, NA, RPL_THEME3),
+         RPL_THEME4=ifelse(RPL_THEME4==-999, NA, RPL_THEME4)) %>% 
+  mutate_at(-1, scale)
+head(svi_county1)
 #---------------------------------------------------------------------------------
 #data cleaning/preparing for join on RUCA analysis (may be useful for subsequent analysis)
 #---------------------------------------------------------------------------------
@@ -302,7 +317,7 @@ final_nola_geo<-full_join(final_covid, final_acs) %>%
          testing_rate=tests/estimate_tract_pop_2018*10000,
          positivity_ratio=positives/tests) %>% 
   filter(!is.na(month))
-# create a monthly tract dataset, with geo_def_1 and SVI for correlations
+# create a monthly tract dataset, with nola_geo1 and SVI 
 final_tract<-la_covid2 %>% 
   group_by(tract_fips, month) %>% 
   summarise(cases=sum(case_month),
@@ -314,14 +329,16 @@ final_tract<-la_covid2 %>%
          positivity_ratio=positives/tests) %>% 
   left_join(ruca_LA1) %>% 
   left_join(SVI1)
-# and the deaths dataset
+# create a monthly death dataset w/ population estimates + SVI
 final_acs_county<-acs_data_county1 %>%
   left_join(rucc_LA1)%>%
   select(county_fips, county_pop_2018, nola_geo1)
 final_deaths_county<-deaths1 %>% 
   left_join(final_acs_county)%>% 
   mutate(death_rate=deaths/county_pop_2018*100000)%>%
-    select(parish, deaths, month, death_rate, nola_geo1, county_pop_2018)
+  left_join(svi_county1) %>%
+    select(parish, deaths, month, death_rate, nola_geo1, county_pop_2018, RPL_THEME1:RPL_THEMES)
+
 final_deaths_geo<-final_deaths_county%>%
   group_by(month, nola_geo1)%>%
   summarize(death_geo=sum(deaths),
@@ -343,10 +360,11 @@ sum_county<-final_acs_county%>%
   group_by(nola_geo1)%>%
   summarise(geo_pop=sum(county_pop_2018))
 
-final_deaths_couny1<-deaths1 %>% 
+total_deaths_county<-deaths1 %>% 
   left_join(rucc_LA1)%>% 
    group_by(nola_geo1) %>%
   summarise(deaths_total=sum(deaths, na.rm=T)) %>%
 left_join(sum_county) %>%
 mutate(death_rate_total=deaths_total/geo_pop*100000)
-save(final_deaths1, file="final_deaths1.Rdata")
+summary(total_deaths_county)
+save(total_deaths_county, file="total_deaths_county.Rdata")
