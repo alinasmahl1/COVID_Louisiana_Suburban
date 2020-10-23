@@ -15,19 +15,13 @@ library(broom)
 library(sf)
 library(spdep)
 library(stringr)
-getwd()
-setwd("/Users/2/OneDrive - Drexel University/Alina Research/Research/Mapping Covid in Louisianna/Data")
-setwd("/Users/usamabilal/OneDrive - Drexel University/COVID Quick Analyses/COVID_Louisiana_Suburban/data")
-
 library(forcats)
 library(rmapshaper)
 library(maps)
-setwd("/Users/2/OneDrive - Drexel University/Alina Research/Research/Mapping Covid in Louisianna/Data")
-setwd("/Users/usamabilal/OneDrive - Drexel University/COVID Quick Analyses/COVID_Louisiana_Suburban")
 #---------------------------------------------------------------------------#
 #import RUCA data 
 # have already downloaded data and converted to CSV
-ruca<-read.csv("ruca2010revised.csv",  header=TRUE, stringsAsFactors = FALSE)
+ruca<-read.csv("Data/ruca2010revised.csv",  header=TRUE, stringsAsFactors = FALSE)
 str(ruca)
 head(ruca)
 
@@ -42,7 +36,7 @@ ruca1<- ruca %>% rename(county_fips=State.County.FIPS.Code, state=Select.State, 
 #---------------------------------------------------------------------------#
 #import RUCC data 
 # have already downloaded data and converted to CSV
-rucc_county<-read.csv("ruralurbancodes2013.csv",  header=TRUE, stringsAsFactors = FALSE)
+rucc_county<-read.csv("data/ruralurbancodes2013.csv",  header=TRUE, stringsAsFactors = FALSE)
 rucc_county
 str(rucc_county)
 head(rucc_county)
@@ -54,7 +48,7 @@ rucc_county1<-rucc_county %>% rename(county_fips=FIPS, state=State, county=Count
 #import Louisiana covid data 
 # have already downloaded data and converted to CSV
 
-la_covid<-read.csv("LA_COVID_TESTBYWEEK_TRACT_PUBLICUSE (2).csv",  header=TRUE, stringsAsFactors = FALSE)
+la_covid<-read.csv("Data/LA_COVID_TESTBYWEEK_TRACT_PUBLICUSE (2).csv",  header=TRUE, stringsAsFactors = FALSE)
 la_covid
 str(la_covid)
 head(la_covid)
@@ -90,7 +84,7 @@ table(checkfull$number)
 #----------------------------------------------------------------------------
 #import covid parish level cases + deaths from Johns Hopkins 
 
-deaths_jh<-fread("time_series_covid19_deaths_US.csv", header=TRUE) %>%
+deaths_jh<-fread("data/time_series_covid19_deaths_US.csv", header=TRUE) %>%
   subset(Province_State=="Louisiana")%>%
   #only keep vars we'll need, drop obs after oct. 
   select(c(FIPS, Admin2, "3/31/20", "4/30/20", "5/31/20", "6/30/20", "7/31/20", "8/31/20", "9/30/20"))%>%
@@ -177,7 +171,7 @@ acs_data_county1<-acs_data_county %>%
 #---------------------------------------------------------------------------------
 #import the CDC SVI: 
 #---------------------------------------------------------------------------------
-SVI<-read.csv("Louisiana.csv", header=TRUE)
+SVI<-read.csv("data/Louisiana.csv", header=TRUE)
 
 #limit dataset to only the vars we care about 
 SVI1<-SVI %>%

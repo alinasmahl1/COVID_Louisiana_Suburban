@@ -76,22 +76,35 @@ dta_f1b<-final_nola_geo %>%
          incidence_rate=cases/pop*10000,
          positivity_ratio=positives/tests*100) %>% 
   pivot_longer(cols = c(incidence_rate, testing_rate, positivity_ratio)) %>% 
-  mutate(name=factor(name, levels=c("testing_rate",
-                                    "incidence_rate", 
-                                    "positivity_ratio"),
-                     labels = c("Testing", "Incidence", "Positivity"))) %>% 
+  select(nola_geo, month, name, value)
+dta_f1c<-final_deaths_geo %>% 
+  mutate(month1=case_when(month%in%(3:4)~"First", 
+                          month%in%(5:6)~"Valley",
+                          month%in%(7:9)~"Second")) %>%
+  group_by(nola_geo1, month1) %>% 
+  summarise(death=sum(death_geo),
+            pop=sum(geo_pop)) %>% 
+  rename(nola_geo=nola_geo1, month=month1) %>% 
+  mutate( value=death/pop*100000,
+          name="mortality") %>% 
+  select(nola_geo, month, name, value)
+dta_figure1_final<-bind_rows(dta_f1b, dta_f1c) %>% 
+  filter(name!="testing_rate") %>% 
+  mutate(name=factor(name, levels=c("incidence_rate", 
+                                    "positivity_ratio",
+                                    "mortality"),
+                     labels = c("Incidence", "Positivity", "Mortality"))) %>% 
   mutate(month=factor(month, levels=c("First", "Valley", "Second"),
                       labels=c("First peak\n(March-April)",
                                "Re-opening\n(May-June)",
-                               "Second peak\n(July-September)"))) %>% 
-  filter(name!="Testing")
-figure1b<-ggplot(dta_f1b, aes(x=month, y=value)) +
+                               "Second peak\n(July-September)"))) 
+figure1b<-ggplot(dta_figure1_final, aes(x=month, y=value)) +
   geom_line(aes(color=nola_geo, group=nola_geo)) +
   geom_point(aes(fill=nola_geo), color="black", pch=21,size=2)+
   scale_color_brewer(type="qual", palette=2, name="")+
   scale_fill_brewer(type="qual", palette=2, name="")+
   scale_y_continuous(limits=c(0, NA))+#, sec.axis = dup_axis())+
-  labs(x="", y="Testing/incidence rate per 10,000\or positivity ratio (%)",
+  labs(x="", y="Testing/incidence rate per 10,000\nor positivity ratio (%)",
        title="Figure 1: COVID-19 outcomes by geography in Lousiana")+
   labs(x="", y="Incidence rate per 10,000 or positivity ratio (%)")+
   facet_wrap(~name, scales = "free_y") +
@@ -106,81 +119,7 @@ figure1b<-ggplot(dta_f1b, aes(x=month, y=value)) +
 figure1b
 ggsave(figure1b, file="Results/Figure1b.pdf", width=15, height=6)
 
-#final figure 
-dta_f1c<-final_nola_geo %>% 
-  mutate(month=case_when(month%in%(3:4)~"First", 
-                         month%in%(5:6)~"Valley",
-                         month%in%(7:9)~"Second")) %>% 
-  group_by(nola_geo, month) %>% 
-  summarise(cases=sum(cases),
-            tests=sum(tests),
-            positives=sum(positives),
-            pop=sum(estimate_tract_pop_2018)) %>% 
-  mutate( incidence_rate=cases/pop*10000,
-         positivity_ratio=positives/tests*100) %>% 
-  pivot_longer(cols = c(incidence_rate, positivity_ratio)) %>% 
-  mutate(name=factor(name, levels=c("incidence_rate", 
-                                    "positivity_ratio"),
-                     labels = c( "Incidence", "Positivity"))) %>% 
-  mutate(month=factor(month, levels=c("First", "Valley", "Second"),
-                      labels=c("First wave\n(March-April)",
-                               "Re-opening\n(May-June)",
-                               "Second wave\n(July-September)")))
-figure1c<-ggplot(dta_f1c, aes(x=month, y=value)) +
-  geom_line(aes(color=nola_geo, group=nola_geo)) +
-  geom_point(aes(fill=nola_geo), color="black", pch=21,size=2)+
-  scale_color_brewer(type="qual", palette=2, name="")+
-  scale_fill_brewer(type="qual", palette=2, name="")+
-  scale_y_continuous(limits=c(0, NA))+#, sec.axis = dup_axis())+
-  labs(x="", y="Incidence rate per 10,000 or positivity ratio (%)",
-       title="Figure 1: COVID-19 outcomes by geography in Lousiana")+
-  facet_wrap(~name, scales = "free_y") +
-  theme_bw()+
-  theme(axis.text=element_text(color="black", size=14),
-        axis.title=element_text(color="black", size=16, face="bold"),
-        plot.title=element_text(color="black", size=20, face="bold"),
-        strip.background = element_blank(),
-        strip.text =element_text(color="black", size=16, face="bold"),
-        legend.position = "bottom",
-        legend.text=element_text(color="black", size=14))
-figure1c
-ggsave(figure1c, file="/Results/Figure1c.pdf", width=15, height=6)
-#
-ggplotly(figure1c)
 
-#repeated for mortality 
-dta_f3c<-final_deaths_geo %>% 
-  mutate(month1=case_when(month%in%(3:4)~"First", 
-                          month%in%(5:6)~"Valley",
-                          month%in%(7:9)~"Second")) %>%
-  group_by(nola_geo1, month1) %>% 
-  summarise(death=sum(death_geo),
-            pop=sum(geo_pop)) %>% 
-  mutate( death_rate1=death/pop*100000,
-          month1=factor(month1, levels=c("First", "Valley", "Second"),
-                        labels=c("First wave\n(March-April)",
-                                 "Re-opening\n(May-June)",
-                                 "Second wave\n(July-September)")))
-
-figure1d_mort<-ggplot(dta_f3c, aes(x=month1, y=death_rate1)) +
-  geom_line(aes(color=nola_geo1, group=nola_geo1)) +
-  geom_point(aes(fill=nola_geo1), color="black", pch=21,size=2)+
-  scale_color_brewer(type="qual", palette=2, name="")+
-  scale_fill_brewer(type="qual", palette=2, name="")+
-  scale_y_continuous(limits=c(0, NA))+#, sec.axis = dup_axis())+
-  labs(x="", y="Death rate per 100,000 ",
-       title="Mortality")+
-  theme_bw()+
-  theme(axis.text=element_text(color="black", size=14),
-        axis.title=element_text(color="black", size=16, face="bold"),
-        plot.title=element_text(color="black", size=12, face="bold"),
-        strip.background = element_blank(),
-        strip.text =element_text(color="black", size=16, face="bold"),
-        legend.position = "bottom",
-        legend.text=element_text(color="black", size=14))
-figure1d_mort
-ggsave(figure1d_mort, file="/Results/Figure3_mort.pdf", width=15, height=6)
-ggplotly(figure1d_mort)
 
 # figure 2: EDA
 #scatter plots 
@@ -210,12 +149,15 @@ final_deaths_county %>%
   facet_wrap(.~month, scales="free_y")
 
 # urbanicity-specific quintiles
-quintiles<-full_join(final_tract, final_tract %>% filter(month==5) %>% 
+quintiles<-final_tract %>% 
+  # getting a unique value for each census tract
+  filter(month==5) %>% 
   group_by(nola_geo) %>% 
   mutate(svi_q=cut(RPL_THEMES, 
-                      breaks = quantile(RPL_THEMES, probs=seq(0, 1, by=0.2), na.rm=T), 
-                      include.lowest = T) %>% as.numeric) %>% 
-  select(nola_geo, tract_fips, svi_q)) %>% 
+                   breaks = quantile(RPL_THEMES, probs=seq(0, 1, by=0.2), na.rm=T), 
+                   include.lowest = T) %>% as.numeric) %>% 
+  select(nola_geo, tract_fips, svi_q)
+quintiles<-full_join(final_tract, quintiles) %>% 
   # test
   mutate(month=case_when(month%in%(3:4)~"First", 
                          month%in%(5:6)~"Valley",
