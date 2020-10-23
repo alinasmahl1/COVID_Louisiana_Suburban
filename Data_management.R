@@ -355,6 +355,7 @@ save(final_nola_geo,
      final_tract,
      final_deaths_county,
      final_deaths_geo, file="final_data.rdata")
+
 #save df w/ total deaths by geo
 sum_county<-final_acs_county%>%
   group_by(nola_geo1)%>%

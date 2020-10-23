@@ -4,6 +4,7 @@ library(RColorBrewer)
 library(lubridate)
 library(MASS)
 library(broom)
+library(plotly)
 select<-dplyr::select
 load("final_data.rdata")
 head(final_nola_geo)
@@ -58,7 +59,8 @@ figure3<-ggplot(dta_f1, aes(x=month, y=death_rate)) +
         legend.position = "bottom",
         legend.text=element_text(color="black", size=14))
 figure3
-ggsave(figur3, file="Results/Figure3.pdf", width=10, height=5)
+ggsave(figure3, file="Results/Figure3.pdf", width=10, height=5)
+ggplotly(figure3)
 
 # figure 1 v2
 dta_f1b<-final_nola_geo %>% 
@@ -167,11 +169,11 @@ figure1d_mort<-ggplot(dta_f3c, aes(x=month1, y=death_rate1)) +
   scale_fill_brewer(type="qual", palette=2, name="")+
   scale_y_continuous(limits=c(0, NA))+#, sec.axis = dup_axis())+
   labs(x="", y="Death rate per 100,000 ",
-       title="Figure 3: COVID-19 deaths by geography in Lousiana")+
+       title="Mortality")+
   theme_bw()+
   theme(axis.text=element_text(color="black", size=14),
         axis.title=element_text(color="black", size=16, face="bold"),
-        plot.title=element_text(color="black", size=20, face="bold"),
+        plot.title=element_text(color="black", size=12, face="bold"),
         strip.background = element_blank(),
         strip.text =element_text(color="black", size=16, face="bold"),
         legend.position = "bottom",
@@ -380,6 +382,59 @@ figure3b<-ggplot(dta_f3b, aes(x=month, y=est, group=nola_geo)) +
         legend.text=element_text(color="black", size=14))
 figure3b
 ggsave(figure3b, file="Results/Figure3b.pdf", width=20, height=10)
+
+# urbanicity-specific quintiles
+#group urban and nola, since only 1 county for nola
+levels(final_deaths_county$nola_geo1)
+final_deaths_county$geo <- factor(final_deaths_county$nola_geo1)
+levels(final_deaths_county$geo) <- list(
+  AllUrban= c("New Orleans", "Other urban"),
+  Suburban=("Suburban"), 
+  Rural=("Rural"))
+
+#test
+quintiles<-full_join(final_deaths_county, final_deaths_county %>% filter(month==5) %>%
+                       group_by(geo) %>% 
+                       mutate(svi_q=cut(RPL_THEMES, 
+                                        breaks = quantile(RPL_THEMES, probs=seq(0, 1, by=0.2), na.rm=T), 
+                                        include.lowest = T) %>% as.numeric) %>% 
+                       select(geo, county_fips, svi_q))%>%
+  # test
+  mutate(month=factor(month), 
+         month=case_when(month%in%(3:4)~"First", 
+                         month%in%(5:6)~"Valley",
+                         month%in%(7:9)~"Second")) %>% 
+  group_by(geo, month, svi_q) %>%
+  summarise(deaths=sum(deaths),
+            pop=sum(county_pop_2018)) %>% 
+  mutate(deaths_rate=deaths/pop*100000) %>% 
+  select(geo, month, svi_q, deaths_rate) %>% 
+  pivot_longer(cols=c(deaths_rate)) %>% 
+  mutate(month=factor(month, levels=c("First", "Valley", "Second"),
+                      labels=c("First peak\n(March-April)",
+                               "Re-opening\n(May-June)",
+                               "Second peak\n(July-September)"))) 
+figure3mort<-ggplot(quintiles %>% filter(!is.na(month)), aes(x=svi_q, y=value)) +
+  geom_line(aes(color=geo)) +
+  geom_point(aes(fill=geo), color="black", pch=21, size=2)+
+  facet_grid(name~month, scales="free_y")+
+  scale_color_brewer(type="qual", palette=2, name="")+
+  scale_fill_brewer(type="qual", palette=2, name="")+
+  scale_x_continuous(breaks=1:10)+
+  scale_y_continuous(limits=c(0, NA))+
+  labs(x="Social Vulnerability Index Quintile (1=lowest, 5=highest vulnerability)",
+       y="Death rate per 100,000 ")+
+  theme_bw()+
+  theme(
+  #  axis.text=element_text(color="black", size=14),
+        axis.title=element_text(color="black", size=16, face="bold"),
+        strip.background = element_blank(),
+        strip.text =element_text(color="black", size=16, face="bold"),
+        plot.title=element_text(color="black", size=20, face="bold"),
+        legend.position = "bottom", 
+        legend.text=element_text(color="black", size=14))
+figure3mort
+ggsave(figure3mort, file="Results/Figure3mort.pdf", width=12, height=10)
 
 
 
