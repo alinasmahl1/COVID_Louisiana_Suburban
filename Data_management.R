@@ -292,7 +292,7 @@ rucc_LA1<- rucc_LA %>%
                      code_rucc %in% c(3, 4, 5, 6) ~3, 
                      code_rucc %in% c(7,8, 9) ~4,
                      TRUE~ 99),
-         nola_geo=factor(nola_geo, labels=c("New Orleans", "Other urban", "Suburban", "Rural")))
+         nola_geo=factor(nola_geo, labels=c("New Orleans", "Other Urban", "Suburban", "Rural")))
 
 table(rucc_LA1$code_rucc, rucc_LA1$county_geo_1)
 table(rucc_LA1$code_rucc, rucc_LA1$nola_geo)
