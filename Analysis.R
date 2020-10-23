@@ -42,11 +42,11 @@ ggsave(figure1, file="Results/Figure1.pdf", width=10, height=5)
 #figure 1 repeated for mortality 
 
 dta_f1<-final_deaths_geo %>% 
-  select(nola_geo1, month, death_rate) %>%
+  select(nola_geo, month, death_rate) %>%
   mutate(month=factor(month), 
          month=mdy(paste0(month, "-01-2020")))
 figure3<-ggplot(dta_f1, aes(x=month, y=death_rate)) +
-  geom_line(aes(color=nola_geo1)) +
+  geom_line(aes(color=nola_geo)) +
   scale_color_brewer(type="qual", palette=2, name="")+
   scale_x_date(breaks="1 month", date_labels ="%b")+
   scale_y_continuous(limits=c(0, NA))+#, sec.axis = dup_axis())+
@@ -62,7 +62,7 @@ figure3
 ggsave(figure3, file="Results/Figure3.pdf", width=10, height=5)
 ggplotly(figure3)
 
-# figure 1 v2
+# final Figure 1
 dta_f1b<-final_nola_geo %>% 
   mutate(month=case_when(month%in%(3:4)~"First", 
                          month%in%(5:6)~"Valley",
@@ -78,13 +78,12 @@ dta_f1b<-final_nola_geo %>%
   pivot_longer(cols = c(incidence_rate, testing_rate, positivity_ratio)) %>% 
   select(nola_geo, month, name, value)
 dta_f1c<-final_deaths_geo %>% 
-  mutate(month1=case_when(month%in%(3:4)~"First", 
+  mutate(month=case_when(month%in%(3:4)~"First", 
                           month%in%(5:6)~"Valley",
                           month%in%(7:9)~"Second")) %>%
-  group_by(nola_geo1, month1) %>% 
+  group_by(nola_geo, month) %>% 
   summarise(death=sum(death_geo),
             pop=sum(geo_pop)) %>% 
-  rename(nola_geo=nola_geo1, month=month1) %>% 
   mutate( value=death/pop*100000,
           name="mortality") %>% 
   select(nola_geo, month, name, value)
@@ -142,7 +141,7 @@ final_tract %>%
   scale_y_log10()+annotation_logticks(sides="l")+
   facet_wrap(.~month, scales="free_y")
 final_deaths_county %>%
-  ggplot(aes(x=RPL_THEMES, y=death_rate, color=nola_geo1)) + 
+  ggplot(aes(x=RPL_THEMES, y=death_rate, color=nola_geo)) + 
   geom_point()+
   geom_smooth(method="loess", se=FALSE, fullrange=TRUE) +
   scale_y_log10()+annotation_logticks(sides="l")+
@@ -325,10 +324,10 @@ figure3b<-ggplot(dta_f3b, aes(x=month, y=est, group=nola_geo)) +
 figure3b
 ggsave(figure3b, file="Results/Figure3b.pdf", width=20, height=10)
 
-# urbanicity-specific quintiles
+#Figure not included in Article 
 #group urban and nola, since only 1 county for nola
-levels(final_deaths_county$nola_geo1)
-final_deaths_county$geo <- factor(final_deaths_county$nola_geo1)
+levels(final_deaths_county$nola_geo)
+final_deaths_county$geo <- factor(final_deaths_county$nola_geo)
 levels(final_deaths_county$geo) <- list(
   AllUrban= c("New Orleans", "Other urban"),
   Suburban=("Suburban"), 
@@ -381,244 +380,6 @@ ggsave(figure3mort, file="Results/Figure3mort.pdf", width=12, height=10)
 
 
 
-#********************************  Data for sample characteristics summary  *********************************** 
-#total positives, cases, tests
-totals<-final_covid%>%
-  ungroup()%>%
-  summarise(total_pos=sum(positives), 
-            total_case=sum(cases), 
-            total_test=sum(tests))
-
-#total deaths by geo 
-total_deaths<-deaths1 %>% filter(parish!="Parish Under Investigation") %>% 
-  left_join(rucc_LA1) %>% 
-  group_by(nola_geo1) %>% 
-  summarise(deaths_black=sum(deaths_black, na.rm=T),
-            deaths_white=sum(deaths_white, na.rm=T),
-            deaths_unknown=sum(deaths_unknown,na.rm=T),
-            deaths_other=sum(deaths_other, na.rm=T), 
-            total_deaths=deaths_black+deaths_white+deaths_other+deaths_unknown, na.rm=T)
-#********************************  Table 1  *********************************** 
-#unadusted RR and RD 
-table1<-final_deaths %>% 
-  mutate(rd=rate_black-rate_white,
-         rr=rate_black/rate_white) %>% 
-  select(nola_geo1, rate_black, rate_white, rd, rr)
-fwrite(table1, file="results/table1.csv")
-
-<<<<<<< HEAD
-#see code Ind_age_adj_movingcovid.R for indirectly adjusted data
-=======
-# tract race/ethnicity?
-# brief test
-final_tract<-final_tract %>% 
-  mutate(race_cat=case_when(
-    #pct_nonwhite<0.4 ~ "white",
-    #pct_nonwhite>=0.4 & pct_nonwhite<0.6 ~ "mixed",
-    #pct_nonwhite>=0.6 ~ "non-white",
-    pct_nonwhite>=0.5 ~ "non-white",
-    pct_nonwhite<0.5 ~ "white",
-    T ~ ""
-  ))
-gq<-fread("Data/R12640627_SL140.csv") %>% 
-  mutate(tract_fips=as.numeric(Geo_FIPS), 
-         gq=SE_A19001_002, 
-         pct_gq=SE_A19001_002/SE_A19001_001) %>% 
-  select(tract_fips, gq, pct_gq) %>% arrange(desc(pct_gq)) %>% as_tibble
-college<-fread("Data/DECENNIALSF12010.P42_2020-10-07T113524/DECENNIALSF12010.P42_data_with_overlays_2020-10-07T113521.csv") %>% 
-  as_tibble %>% 
-  slice(-1) %>% 
-  rename(college_n=P042008) %>% 
-  mutate(tract_fips=as.numeric(sub("1400000US", "", GEO_ID)),
-         college_n=as.numeric(college_n)) %>% 
-  select(tract_fips, college_n) %>% arrange(desc(college_n))
-
-
-test<-final_tract %>% 
-  #filter(tract_fips!=22071012102) %>% 
-  filter(!tract_fips%in%(gq %>% filter(pct_gq>0.1) %>% pull(tract_fips))) %>% 
-  mutate(month=case_when(month%in%(3:4)~"First", 
-                         month%in%(5:6)~"Valley",
-                         month%in%(7:9)~"Second")) %>% 
-  group_by(nola_geo, month, race_cat) %>% 
-  summarise(cases=sum(cases),
-            tests=sum(tests),
-            positives=sum(positives),
-            pop=sum(estimate_tract_pop_2018)) %>% 
-  mutate(testing_rate=tests/pop*10000,
-         incidence_rate=cases/pop*10000,
-         positivity_ratio=positives/tests*100) %>% 
-  mutate(month=factor(month, levels=c("First", "Valley", "Second"),
-                      labels=c("First wave\n(March-April)",
-                               "Re-opening\n(May-June)",
-                               "Second wave\n(July-September)")))
-ggplot(test %>% rename(value=incidence_rate), aes(x=month, y=value)) +
-  geom_line(aes(color=nola_geo, group=nola_geo)) +
-  geom_point(aes(fill=nola_geo), color="black", pch=21,size=2)+
-  scale_color_brewer(type="qual", palette=2, name="")+
-  scale_fill_brewer(type="qual", palette=2, name="")+
-  scale_y_continuous(limits=c(0, NA))+#, sec.axis = dup_axis())+
-  labs(x="", y="Testing/incidence rate per 10,000\nor positivity ratio (%)",
-       title="Figure 1: COVID-19 outcomes by urbanicity in Lousiana")+
-  facet_wrap(~race_cat, scales = "free_y") +
-  theme_bw()+
-  theme(axis.text=element_text(color="black", size=14),
-        axis.title=element_text(color="black", size=16, face="bold"),
-        plot.title=element_text(color="black", size=20, face="bold"),
-        strip.background = element_blank(),
-        strip.text =element_text(color="black", size=16, face="bold"),
-        legend.position = "bottom",
-        legend.text=element_text(color="black", size=14))
-ggplot(test %>% rename(value=incidence_rate) %>% filter(!is.na(nola_geo)), aes(x=month, y=value)) +
-  geom_line(aes(color=race_cat, group=race_cat)) +
-  geom_point(aes(fill=race_cat), color="black", pch=21,size=2)+
-  scale_color_brewer(type="qual", palette=2, name="")+
-  scale_fill_brewer(type="qual", palette=2, name="")+
-  scale_y_continuous(limits=c(0, NA))+#, sec.axis = dup_axis())+
-  labs(x="", y="Testing/incidence rate per 10,000\nor positivity ratio (%)",
-       title="Figure 1: COVID-19 outcomes by urbanicity in Lousiana")+
-  facet_wrap(~nola_geo) +
-  theme_bw()+
-  theme(axis.text=element_text(color="black", size=14),
-        axis.title=element_text(color="black", size=16, face="bold"),
-        plot.title=element_text(color="black", size=20, face="bold"),
-        strip.background = element_blank(),
-        strip.text =element_text(color="black", size=16, face="bold"),
-        legend.position = "bottom",
-        legend.text=element_text(color="black", size=14))
-
-testir<-test %>% select(nola_geo, month, race_cat, incidence_rate) %>% 
-  pivot_wider(id_cols = c(nola_geo, month), names_from = race_cat, 
-              values_from = incidence_rate) %>% 
-  mutate(rr=`non-white`/white,
-         rd=`non-white`-white) %>% 
-  arrange(nola_geo, month)
-testposit<-test %>% select(nola_geo, month, race_cat, positivity_ratio) %>% 
-  pivot_wider(id_cols = c(nola_geo, month), names_from = race_cat, 
-              values_from = positivity_ratio) %>% 
-  mutate(rr=`non-white`/white,
-         rd=`non-white`-white) %>% 
-  arrange(nola_geo, month)
-ggplot(testposit, aes(x=month, y=rd)) +
-  geom_point(aes(color=nola_geo)) +
-  geom_line(aes(group=nola_geo, color=nola_geo))
-
-
-
-#####################plots repeated for SVI #####################
-### incidence (log of cases)
-ggplot(data=corr_nola_svi, aes(x=month, y=svi_inc, group=nola_geo)) +
-  geom_hline(yintercept=0, linetype="dashed") +
-  geom_line(aes(colour=nola_geo)) +
-  geom_point(aes(colour=nola_geo)) +
-  ylim(-0.7, 0.7) +
-  scale_color_brewer(type="qual", palette=2) +
-  theme(legend.position="none") +
-  labs(title="Incidence rate", x="Month", y = "Pearson Correlation Coefficient with SVI")
-# Testing (log of test)
-ggplot(data=corr_nola_svi, aes(x=month, y=svi_test, group=nola_geo)) +
-  geom_hline(yintercept=0, linetype="dashed") +
-  geom_line(aes(colour=nola_geo)) +
-  geom_point(aes(colour=nola_geo)) +
-  ylim(-0.7, 0.7) +
-  scale_color_brewer(type="qual", palette=2) +
-  theme(legend.position="none", axis.title.y=element_blank()) + 
-  labs(title="Testing Rate", x="Month", y = "Pearson Correlation Coefficient with SVI")
-
-#Positivity 
-corr_nola_svi<-county_tract_covid3 %>%
-  subset(tract_fips!=22071012102)%>%
-  mutate(loginc=log(1+incidence_rate_month), 
-         logtest=log(1+test_ratio_month))%>%
-  group_by(month, nola_geo)%>%
-  summarise(svi_inc = cor(RPL_THEMES, loginc,
-                          method="pearson", use="complete.obs"), 
-            svi_test=cor(RPL_THEMES,  logtest, 
-                         method="pearson", use="complete.obs"),
-            svi_pos=cor(RPL_THEMES, posit_ratio_month, 
-                        method="pearson", use="complete.obs"))%>%    
-  ungroup()
-
-ggplot(data=corr_nola_svi, aes(x=month, y=svi_pos, group=nola_geo)) +
-  geom_hline(yintercept=0, linetype="dashed") +
-  geom_line(aes(colour=nola_geo)) +
-  geom_point(aes(colour=nola_geo)) +
-  ylim(-0.7, 0.7) +
-  scale_color_brewer(type="qual", palette=2) +
-  theme(axis.title.y=element_blank()) + 
-  labs(title="Positivity Ratio", x="Month", y = "Pearson Correlation Coefficient with SVI", colour="Geography")
-
-ggplot(data=corr_nola_svi, aes(x=month, y=svi_test, group=nola_geo)) +
-  geom_hline(yintercept=0, linetype="dashed") +
-  geom_line(aes(colour=nola_geo)) +
-  geom_point(aes(colour=nola_geo)) +
-  ylim(-0.7, 0.7) +
-  scale_color_brewer(type="qual", palette=2) +
-  theme(axis.title.y=element_blank()) + 
-  labs(title="Positivity Ratio", x="Month", y = "Pearson Correlation Coefficient with SVI", colour="Geography")
-
-ggplot(data=corr_nola_svi, aes(x=month, y=svi_inc, group=nola_geo)) +
-  geom_hline(yintercept=0, linetype="dashed") +
-  geom_line(aes(colour=nola_geo)) +
-  geom_point(aes(colour=nola_geo)) +
-  ylim(-0.7, 0.7) +
-  scale_color_brewer(type="qual", palette=2) +
-  theme(axis.title.y=element_blank()) + 
-  labs(title="Positivity Ratio", x="Month", y = "Pearson Correlation Coefficient with SVI", colour="Geography")
-
-
->>>>>>> 79d8e5e2093aee04968ee814e5cd43533813ae3a
-
-###################################APPENDIX ###################################
-## repeated for figure 2 
-deciles1<-full_join(final_tract, final_tract %>% filter(month==5) %>% filter(tract_fips!=22071012102) %>% 
-                     group_by(nola_geo) %>% 
-                     mutate(svi_d=cut(RPL_THEMES, 
-                                      breaks = quantile(RPL_THEMES, probs=seq(0, 1, by=0.2), na.rm=T), 
-                                      include.lowest = T) %>% as.numeric) %>% 
-                     select(nola_geo, tract_fips, svi_d)) %>% 
-  # test
-  mutate(month=case_when(month%in%(3:4)~"First", 
-                         month%in%(5:6)~"Valley",
-                         month%in%(7:9)~"Second")) %>% 
-  group_by(nola_geo, month, svi_d) %>% 
-  summarise(cases=sum(cases),
-            tests=sum(tests),
-            positives=sum(positives),
-            pop=sum(estimate_tract_pop_2018)) %>% 
-  mutate(testing_rate=tests/pop*10000,
-         incidence_rate=cases/pop*10000,
-         positivity_ratio=positives/tests*100) %>% 
-  select(nola_geo, month, svi_d, testing_rate, incidence_rate, positivity_ratio) %>% 
-  pivot_longer(cols=c(testing_rate, positivity_ratio, incidence_rate)) %>% 
-  mutate(name=factor(name, levels=c("testing_rate",
-                                    "positivity_ratio",
-                                    "incidence_rate"),
-                     labels = c("Testing", "Positivity", "Incidence"))) %>% 
-  mutate(month=factor(month, levels=c("First", "Valley", "Second"),
-                      labels=c("First wave (March-April)",
-                               "Re-opening (May-June)",
-                               "Second wave (July-September)")))
-#month=factor(month, levels=3:9,
-#              labels=month.name[3:9]))
-
-figure2<-ggplot(deciles1 %>% filter(!is.na(month)), aes(x=svi_d, y=value)) +
-  geom_line(aes(color=nola_geo)) +
-  geom_point(aes(fill=nola_geo), color="black", pch=21)+
-  facet_grid(name~month, scales="free_y")+
-  scale_color_brewer(type="qual", palette=2, name="")+
-  scale_fill_brewer(type="qual", palette=2, name="")+
-  scale_x_continuous(breaks=1:10)+
-  labs(x="Social Vulnerability Index Quintile (1=lowest, 5=highest vulnerability)",
-       y="Testing/incidence rate per 10,000 or positivity ratio (%)")+
-  theme_bw()+
-  theme(axis.text=element_text(color="black", size=14),
-        axis.title=element_text(color="black", size=16, face="bold"),
-        strip.background = element_blank(),
-        strip.text =element_text(color="black", size=16, face="bold"),
-        legend.position = "bottom",
-        legend.text=element_text(color="black", size=14))
-figure2
 
 
 
