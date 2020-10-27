@@ -123,7 +123,6 @@ deaths1<-deaths_jh1%>%
 #---------------------------------------------------------------------------#
 
 #import the census data
-#my census API key if needed
 # census_api_key("xxxx", install=TRUE)
 
 #view all variables
@@ -187,7 +186,7 @@ SVI1<-SVI %>%
 head(SVI1)
 
 #import the county level SVI
-svi_county<-fread("Louisiana_COUNTY.csv")
+svi_county<-fread("data/Louisiana_COUNTY.csv")
 
 svi_county1<-svi_county %>%
   subset(select=c(FIPS,RPL_THEME1, RPL_THEME2, RPL_THEME3, RPL_THEME4, RPL_THEMES )) %>%
@@ -348,7 +347,7 @@ summary(final_deaths_geo)
 save(final_nola_geo,
      final_tract,
      final_deaths_county,
-     final_deaths_geo, file="final_data.rdata")
+     final_deaths_geo, file="data/final_data.rdata")
 
 #save df w/ total deaths by geo
 sum_county<-final_acs_county%>%
@@ -362,4 +361,4 @@ total_deaths_county<-deaths1 %>%
 left_join(sum_county) %>%
 mutate(death_rate_total=deaths_total/geo_pop*100000)
 summary(total_deaths_county)
-save(total_deaths_county, file="total_deaths_county.Rdata")
+save(total_deaths_county, file="data/total_deaths_county.Rdata")
