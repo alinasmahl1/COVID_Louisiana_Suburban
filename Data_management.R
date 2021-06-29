@@ -27,12 +27,12 @@ head(ruca)
 
 #clean ruca data 
 #rename vars so easier to use
-ruca1<- ruca %>% rename(county_fips=State.County.FIPS.Code, state=Select.State, county=Select.County, 
+ruca1<- ruca %>% rename(county_fips=ï..State.County.FIPS.Code, state=Select.State, county=Select.County, 
                         tract_fips=State.County.Tract.FIPS.Code..lookup.by.address.at.http...www.ffiec.gov.Geocode.., 
                         primary_ruca=Primary.RUCA.Code.2010, secondary_ruca=Secondary.RUCA.Code..2010..see.errata., 
                         tract_pop=Tract.Population..2010, land_area=Land.Area..square.miles...2010, pop_density=Population.Density..per.square.mile...2010)
 
-
+str(ruca)
 #---------------------------------------------------------------------------#
 #import RUCC data 
 # have already downloaded data and converted to CSV
@@ -42,13 +42,13 @@ str(rucc_county)
 head(rucc_county)
 
 #clean/relabel rucc data 
-rucc_county1<-rucc_county %>% rename(county_fips=FIPS, state=State, county=County_Name, pop_2010=Population_2010, code_rucc=RUCC_2013)
+rucc_county1<-rucc_county %>% rename(county_fips=ï..FIPS, state=State, county=County_Name, pop_2010=Population_2010, code_rucc=RUCC_2013)
 
 #---------------------------------------------------------------------------#
 #import Louisiana covid data 
 # have already downloaded data and converted to CSV
 
-la_covid<-read.csv("Data/LA_COVID_TESTBYWEEK_TRACT_PUBLICUSE (2).csv",  header=TRUE, stringsAsFactors = FALSE)
+la_covid<-read.csv("Data/LA_COVID_TESTBYWEEK_TRACT_PUBLICUSE.csv",  header=TRUE, stringsAsFactors = FALSE)
 la_covid
 str(la_covid)
 head(la_covid)
@@ -56,21 +56,23 @@ head(la_covid)
 #relabel for easier use 
 
 la_covid1<- la_covid %>% 
-  rename(parish=Parish, tract_fips=Tract, week=Week..Thur.Wed., date_startweek=Date.for.start.of.week,
+  rename(parish=ï..Parish, tract_fips=Tract, week=Week..Thur.Wed., date_startweek=Date.for.start.of.week,
          date_endweek=Date.for.end.of.week, week_test_count=Weekly.Test.Count, week_neg_test_count=Weekly.Negative.Test.Count, 
          week_pos_test_count=Weekly.Positive.Test.Count, week_case_count=Weekly.Case.Count) %>% 
   mutate(date_startweek1= mdy(date_startweek), #convert to date format
          date_endweek1=mdy(date_endweek), 
-         month=month(date_endweek1)) 
+         month=month(date_endweek1), 
+         year=year(date_endweek1)) 
 
 #create monthly counts  
 la_covid2<- la_covid1 %>%           
-  group_by(tract_fips, month) %>%  
+  group_by(tract_fips, month, year) %>%  
   summarise(
     test_month=sum(week_test_count),
     positive_month=sum(week_pos_test_count), 
     negative_month=sum(week_neg_test_count), 
-    case_month=sum(week_case_count))
+    case_month=sum(week_case_count))%>%
+  arrange(tract_fips, year, month)
 head(la_covid2)   
 
 
@@ -79,13 +81,13 @@ checkfull<-la_covid2 %>%
   group_by(tract_fips)%>% 
   summarise(number = n())
 table(checkfull$number)
-#all ct's have 7 months so no need to set to zero.
+#all ct's have 16 months so no need to set to zero.
 
 #----------------------------------------------------------------------------
 #import covid parish level cases + deaths from Johns Hopkins 
 
 deaths_jh<-fread("data/time_series_covid19_deaths_US.csv", header=TRUE) %>%
-  subset(Province_State=="Louisiana")%>%
+  subset(Province_State=="Louisiana")
   #only keep vars we'll need, drop obs after oct. 
   select(c(FIPS, Admin2, "3/31/20", "4/30/20", "5/31/20", "6/30/20", "7/31/20", "8/31/20", "9/30/20"))%>%
 #remove observation w/ unassigned 
