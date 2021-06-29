@@ -86,25 +86,36 @@ table(checkfull$number)
 #----------------------------------------------------------------------------
 #import covid parish level cases + deaths from Johns Hopkins 
 
+#update to June 30th if we decide to extend to include june 
 deaths_jh<-fread("data/time_series_covid19_deaths_US.csv", header=TRUE) %>%
-  subset(Province_State=="Louisiana")
+  subset(Province_State=="Louisiana")%>%
   #only keep vars we'll need, drop obs after oct. 
-  select(c(FIPS, Admin2, "3/31/20", "4/30/20", "5/31/20", "6/30/20", "7/31/20", "8/31/20", "9/30/20"))%>%
+  select(c(FIPS, Admin2, "3/31/20", "4/30/20", "5/31/20", "6/30/20", "7/31/20", "8/31/20", "9/30/20", "10/31/20", "11/30/20", "12/31/20",
+           "1/31/21", "2/28/21", "3/31/21", "4/30/21", "5/31/21"))%>%
 #remove observation w/ unassigned 
    subset(Admin2!="Out of LA")
 
 deaths_jh1<- deaths_jh %>%
-  rename(parish=Admin2, county_fips=FIPS, march="3/31/20", april="4/30/20", may="5/31/20", june="6/30/20",
-                       july="7/31/20", august="8/31/20", september="9/30/20")%>%
+  rename(parish=Admin2, county_fips=FIPS, march20="3/31/20", april20="4/30/20", may20="5/31/20", june20="6/30/20",
+                       july20="7/31/20", august20="8/31/20", september20="9/30/20", october20="10/31/20", november20="11/30/20", december20="12/31/20", 
+                        january21="1/31/21", february21="2/28/21", march21="3/31/21", april21="4/30/21", may21="5/31/21")%>%
          group_by(parish)%>%
-           mutate(deaths_3=march,
-                  deaths_4=april-march, 
-                  deaths_5=may-april, 
-                  deaths_6=june-may, 
-                  deaths_7=july-june, 
-                  deaths_8=august-july, 
-                  deaths_9=september-august)%>%
-  select(c(parish, county_fips,  deaths_3:deaths_9)) %>%
+           mutate(deaths_3=march20,
+                  deaths_4=april20-march20, 
+                  deaths_5=may20-april20, 
+                  deaths_6=june20-may20, 
+                  deaths_7=july20-june20, 
+                  deaths_8=august20-july20, 
+                  deaths_9=september20-august20,
+                  deaths_10=october20-september20, 
+                  deaths_11=november20-october20, 
+                  deaths_12=december20-november20, 
+                  deaths_13=january21-december20,
+                  deaths_14=february21-january21, 
+                  deaths_15=march21-february21, 
+                  deaths_16=april21-march21, 
+                  deaths_17=may21-april21 )%>%
+  select(c(parish, county_fips,  deaths_3:deaths_17)) %>%
 #remove row with data from unassigned county (n=190)
   subset(parish!="Unassigned")
 
@@ -118,8 +129,17 @@ deaths1<-deaths_jh1%>%
                          date=="deaths_6"~6,
                          date=="deaths_7"~7,
                          date=="deaths_8"~8,
-                         date=="deaths_9"~9)) %>%
-  select(-date) 
+                         date=="deaths_9"~9, 
+                         date=="deaths_10"~10, 
+                         date=="deaths_11"~11, 
+                         date=="deaths_12"~12, 
+                         date=="deaths_13"~13, 
+                         date=="deaths_14"~14, 
+                         date=="deaths_15"~15, 
+                         date=="deaths_16"~16, 
+                         date=="deaths_17"~17)) %>%
+  select(-date) %>%
+  arrange(parish, county_fips, month)
 
 
 #---------------------------------------------------------------------------#
