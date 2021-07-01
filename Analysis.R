@@ -150,12 +150,12 @@ ggsave(figure1b, file="Results/Figure2.pdf", width=17, height=6)
 # urbanicity-specific quintiles
 quintiles<-final_tract %>% 
   # getting a unique value for each census tract
-  filter(month==5) %>% 
+  filter(month==12) %>% 
   group_by(nola_geo) %>% 
   mutate(svi_q=cut(RPL_THEMES, 
                    breaks = quantile(RPL_THEMES, probs=seq(0, 1, by=0.2), na.rm=T), 
                    include.lowest = T) %>% as.numeric) %>%
-select(nola_geo, tract_fips, svi_q)
+  select(nola_geo, tract_fips, svi_q, svi=RPL_THEMES)
 
 quintiles<-full_join(final_tract, quintiles) %>% 
   # test
@@ -206,5 +206,4 @@ figure2
 ggsave(figure2, file="Results/Figure3.pdf", width=20, height=10)
 
 ggplotly(figure2)
-
 
