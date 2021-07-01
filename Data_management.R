@@ -91,14 +91,14 @@ deaths_jh<-fread("data/time_series_covid19_deaths_US.csv", header=TRUE) %>%
   subset(Province_State=="Louisiana")%>%
   #only keep vars we'll need, drop obs after oct. 
   select(c(FIPS, Admin2, "3/31/20", "4/30/20", "5/31/20", "6/30/20", "7/31/20", "8/31/20", "9/30/20", "10/31/20", "11/30/20", "12/31/20",
-           "1/31/21", "2/28/21", "3/31/21", "4/30/21", "5/31/21"))%>%
+           "1/31/21", "2/28/21", "3/31/21", "4/30/21", "5/31/21", "6/30/21"))%>%
 #remove observation w/ unassigned 
    subset(Admin2!="Out of LA")
 
 deaths_jh1<- deaths_jh %>%
   rename(parish=Admin2, county_fips=FIPS, march20="3/31/20", april20="4/30/20", may20="5/31/20", june20="6/30/20",
                        july20="7/31/20", august20="8/31/20", september20="9/30/20", october20="10/31/20", november20="11/30/20", december20="12/31/20", 
-                        january21="1/31/21", february21="2/28/21", march21="3/31/21", april21="4/30/21", may21="5/31/21")%>%
+                        january21="1/31/21", february21="2/28/21", march21="3/31/21", april21="4/30/21", may21="5/31/21", june21="6/30/21")%>%
          group_by(parish)%>%
            mutate(deaths_3=march20,
                   deaths_4=april20-march20, 
@@ -320,7 +320,7 @@ table(rucc_LA1$code_rucc, rucc_LA1$nola_geo)
 
 # create a monthly geo_def_1 dataset
 final_covid<-la_covid2 %>% left_join(ruca_LA1) %>% 
-  group_by(nola_geo, month) %>% 
+  group_by(nola_geo, month, year) %>% 
   summarise(cases=sum(case_month),
             positives=sum(positive_month),
             tests=sum(test_month))
@@ -334,7 +334,7 @@ final_nola_geo<-full_join(final_covid, final_acs) %>%
   filter(!is.na(month))
 # create a monthly tract dataset, with nola_geo and SVI 
 final_tract<-la_covid2 %>% 
-  group_by(tract_fips, month) %>% 
+  group_by(tract_fips, month, year) %>% 
   summarise(cases=sum(case_month),
             positives=sum(positive_month),
             tests=sum(test_month)) %>% 
