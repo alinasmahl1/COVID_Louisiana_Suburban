@@ -86,10 +86,9 @@ table(checkfull$number)
 #----------------------------------------------------------------------------
 #import covid parish level cases + deaths from Johns Hopkins 
 
-#update to June 30th if we decide to extend to include june 
 deaths_jh<-fread("data/time_series_covid19_deaths_US.csv", header=TRUE) %>%
   subset(Province_State=="Louisiana")%>%
-  #only keep vars we'll need, drop obs after oct. 
+  #only keep vars we'll need, drop obs after June 30th 
   select(c(FIPS, Admin2, "3/31/20", "4/30/20", "5/31/20", "6/30/20", "7/31/20", "8/31/20", "9/30/20", "10/31/20", "11/30/20", "12/31/20",
            "1/31/21", "2/28/21", "3/31/21", "4/30/21", "5/31/21", "6/30/21"))%>%
 #remove observation w/ unassigned 
@@ -114,7 +113,8 @@ deaths_jh1<- deaths_jh %>%
                   deaths_14=february21-january21, 
                   deaths_15=march21-february21, 
                   deaths_16=april21-march21, 
-                  deaths_17=may21-april21 )%>%
+                  deaths_17=may21-april21, 
+                  deaths_18=june21-may21)%>%
   select(c(parish, county_fips,  deaths_3:deaths_17)) %>%
 #remove row with data from unassigned county (n=190)
   subset(parish!="Unassigned")
@@ -137,7 +137,8 @@ deaths1<-deaths_jh1%>%
                          date=="deaths_14"~14, 
                          date=="deaths_15"~15, 
                          date=="deaths_16"~16, 
-                         date=="deaths_17"~17)) %>%
+                         date=="deaths_17"~17, 
+                         date=="deaths_18"~18)) %>%
   select(-date) %>%
   arrange(parish, county_fips, month)
 
@@ -381,6 +382,14 @@ total_deaths_county<-deaths1 %>%
    group_by(nola_geo) %>%
   summarise(deaths_total=sum(deaths, na.rm=T)) %>%
 left_join(sum_county) %>%
-mutate(death_rate_total=deaths_total/geo_pop*100000)
+mutate(death_rate_total=deaths_total/geo_pop*10000)
 summary(total_deaths_county)
 save(total_deaths_county, file="data/total_deaths_county.Rdata")
+
+#create a weekly +geo dataset 
+weekly<-la_covid1%>%left_join(ruca_LA1)%>% 
+  group_by(nola_geo, date_endweek1) %>% 
+  summarise(cases=sum(week_case_count),
+            positives=sum(week_pos_test_count),
+            tests=sum(week_test_count))
+
