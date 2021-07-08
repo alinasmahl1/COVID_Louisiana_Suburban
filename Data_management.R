@@ -83,6 +83,7 @@ checkfull<-la_covid2 %>%
 table(checkfull$number)
 #all ct's have 16 months so no need to set to zero.
 
+
 #----------------------------------------------------------------------------
 #import covid parish level cases + deaths from Johns Hopkins 
 
@@ -115,8 +116,8 @@ deaths_jh1<- deaths_jh %>%
                   deaths_16=april21-march21, 
                   deaths_17=may21-april21, 
                   deaths_18=june21-may21)%>%
-  select(c(parish, county_fips,  deaths_3:deaths_17)) %>%
-#remove row with data from unassigned county (n=190)
+  select(c(parish, county_fips,  deaths_3:deaths_17))%>%
+#remove row with data from unassigned county (n=941)
   subset(parish!="Unassigned")
 
 deaths1<-deaths_jh1%>%
@@ -392,4 +393,5 @@ weekly<-la_covid1%>%left_join(ruca_LA1)%>%
   summarise(cases=sum(week_case_count),
             positives=sum(week_pos_test_count),
             tests=sum(week_test_count))
+save(weekly, file="data/weekly.Rdata")
 

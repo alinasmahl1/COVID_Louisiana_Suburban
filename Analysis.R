@@ -6,12 +6,19 @@ library(MASS)
 library(broom)
 library(plotly)
 library(hrbrthemes)
+library(gridExtra)
+library(ggpubr)
+
 
 select<-dplyr::select
 load("data/final_data.rdata")
 head(final_nola_geo)
 head(final_deaths)
 head(final_tract)
+
+#descriptives
+#see summaries in data_management for # of cases/tests/positives by geo
+#number of non-matched tests determined by # of tests total (on website)- tests in CT dataset
 
 #Figure 1
 
@@ -28,7 +35,7 @@ figure1a<-ggplot(weekly, aes(x=date_endweek1, y=cases, fill=nola_geo))+
          scale_y_continuous(expand=expansion(mult=0)) +
     scale_fill_brewer(type="qual", palette=2, direction=-1)+
   labs(x="", y="New Case", title="Weekly Cases in Louisiana")+
-#  guides(fill=nola_geo)+
+  guides(fill=F)+
   theme_bw()+
   theme(axis.text=element_text(color="black", size=14),
         legend.position = "bottom",
@@ -62,6 +69,12 @@ figure1b<-ggplot(weekly, aes(x=date_endweek1, y=cases, fill=nola_geo))+
 figure1b
 ggsave(figure1b, file="Results/Figure1b.pdf", width=15, height=6)
 
+#combine into one plot 
+
+figure1<-grid.arrange(figure1a,figure1b,
+             ncol = 1, nrow = 2)
+g <- arrangeGrob(figure1a,figure1b,  nrow=2) #generates g
+ggsave(g, file="Results/figure1.pdf", width=15, height=10) #saves g
 
 # figure 2:
 dta_f1b<-final_nola_geo %>% 
@@ -181,6 +194,9 @@ figure2
 ggsave(figure2, file="Results/Figure3.pdf", width=20, height=10)
 
 ggplotly(figure2)
+
+
+
 
 #####################
 #excluded figure 
