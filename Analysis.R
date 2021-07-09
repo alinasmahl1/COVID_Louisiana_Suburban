@@ -133,6 +133,8 @@ figure2b<-ggplot(dta_figure2_final, aes(x=month, y=value)) +
 figure2b
 ggsave(figure2b, file="Results/Figure2.pdf", width=17, height=6)
 
+ggplotly(figure2b)
+
 
 # figure 3
 # urbanicity-specific quintiles
@@ -172,7 +174,7 @@ quintiles<-full_join(final_tract, quintiles) %>%
                                "Fourth"))) %>% 
   filter(name!="Testing")
 
-figure2<-ggplot(quintiles %>% filter(!is.na(month)), aes(x=svi_q, y=value)) +
+figure3<-ggplot(quintiles %>% filter(!is.na(month)), aes(x=svi_q, y=value)) +
   geom_line(aes(color=nola_geo)) +
   geom_point(aes(fill=nola_geo), color="black", pch=21, size=4)+
   facet_grid(name~month, scales="free_y")+
@@ -190,10 +192,10 @@ figure2<-ggplot(quintiles %>% filter(!is.na(month)), aes(x=svi_q, y=value)) +
         plot.title=element_text(color="black", size=20, face="bold"),
         legend.position = "bottom",
         legend.text=element_text(color="black", size=14))
-figure2
-ggsave(figure2, file="Results/Figure3.pdf", width=20, height=10)
+figure3
+ggsave(figure3, file="Results/Figure3.pdf", width=20, height=10)
 
-ggplotly(figure2)
+ggplotly(figure3)
 
 
 
