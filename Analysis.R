@@ -81,7 +81,8 @@ dta_f1b<-final_nola_geo %>%
   mutate(month=case_when(month %in% c(3, 4, 5, 6) & year==2020 ~"First", 
                          month %in% c(7, 8, 9 , 10) & year==2020 ~"Second", 
                          (month %in% c(11, 12)& year==2020)|(month %in% c(1, 2)) ~"Third", 
-                         month %in% c(3, 4, 5, 6) & year==2021 ~"Fourth"))%>%
+                         month %in% c(3, 4, 5, 6) & year==2021 ~"Vaccine Rollout",
+                         month%in% c(7,8, 9) & year==2021~"Fourth"))%>%
            group_by(nola_geo, month) %>% 
   summarise(cases=sum(cases),
             tests=sum(tests),
@@ -95,8 +96,9 @@ dta_f1b<-final_nola_geo %>%
 dta_f1c<-final_deaths_geo %>% 
   mutate(month=case_when(month %in% c(3, 4, 5, 6)  ~"First", 
                          month %in% c(7, 8, 9 , 10) ~"Second", 
-                         (month %in% c(11, 12, 13, 14)) ~"Third", 
-                         month %in% c(15, 16, 17) ~"Fourth")) %>%
+                         month %in% c(11, 12, 13, 14) ~"Third", 
+                         month %in% c(15, 16, 17, 18) ~"Vaccine Rollout", 
+                         month %in% c(19, 20, 21) ~"Fourth")) %>%
   group_by(nola_geo, month) %>% 
   summarise(death=sum(death_geo),
             pop=sum(geo_pop)) %>% 
@@ -109,10 +111,11 @@ dta_figure2_final<-bind_rows(dta_f1b, dta_f1c) %>%
                                     "incidence_rate", 
                                     "mortality"),
                      labels = c("Positivity", "Incidence", "Mortality"))) %>% 
-  mutate(month=factor(month, levels=c("First", "Second", "Third", "Fourth"),
+  mutate(month=factor(month, levels=c("First", "Second", "Third", "Vaccine Rollout", "Fourth"),
                       labels=c("First",
                                "Second",
                                "Third", 
+                               "Vaccine Rollout", 
                                "Fourth"))) 
 figure2b<-ggplot(dta_figure2_final, aes(x=month, y=value)) +
   geom_line(aes(color=nola_geo, group=nola_geo)) +
@@ -120,7 +123,7 @@ figure2b<-ggplot(dta_figure2_final, aes(x=month, y=value)) +
   scale_color_brewer(type="qual", palette=2, name="")+
   scale_fill_brewer(type="qual", palette=2, name="")+
   scale_y_continuous(limits=c(0, NA))+#, sec.axis = dup_axis())+
-  labs(x="Peak", y="Rate per 10,000 or positivity ratio (%)")+
+  labs(x="Wave", y="Rate per 10,000 or positivity ratio (%)")+
   facet_wrap(~name, scales = "free_y") +
   theme_bw()+
   theme(axis.text=element_text(color="black", size=10),
@@ -152,7 +155,8 @@ quintiles<-full_join(final_tract, quintiles) %>%
   mutate(month=case_when(month %in% c(3, 4, 5, 6) & year==2020 ~"First", 
                          month %in% c(7, 8, 9 , 10) & year==2020 ~"Second", 
                          (month %in% c(11, 12)& year==2020)|(month %in% c(1, 2)) ~"Third", 
-                         month %in% c(3, 4, 5, 6) & year==2021 ~"Fourth"))%>%
+                         month %in% c(3, 4, 5, 6) & year==2021 ~"Vaccine Rollout", 
+                         month %in% c(7, 8) & year==2021~"Fourth"))%>%
   group_by(nola_geo, month, svi_q) %>%
     summarise(cases=sum(cases),
             tests=sum(tests),
@@ -167,10 +171,11 @@ quintiles<-full_join(final_tract, quintiles) %>%
                                     "incidence_rate", 
                                     "positivity_ratio"),
                      labels = c("Testing", "Incidence", "Positivity"))) %>%
-  mutate(month=factor(month, levels=c("First", "Second", "Third", "Fourth"),
+  mutate(month=factor(month, levels=c("First", "Second", "Third", "Vaccine Rollout", "Fourth"),
                       labels=c("First",
                                "Second",
                                "Third", 
+                               "Vaccine Rollout", 
                                "Fourth"))) %>% 
   filter(name!="Testing")
 
@@ -196,85 +201,5 @@ figure3
 ggsave(figure3, file="Results/Figure3.pdf", width=20, height=10)
 
 ggplotly(figure3)
-
-
-
-
-#####################
-#excluded figure 
-
-# figure 1
-#find codes for colors in other graphs 
-brewer.pal(n=4, name="Set2")
-#calculate total cases by geo and create 2 peaks 1 before June 1, and 1 after 
-
-summary<-final_nola_geo %>%
-  mutate(
-    peaks=case_when(month %in% c(3, 4, 5, 6) & year==2020 ~1, 
-                    month %in% c(7, 8, 9 , 10) & year==2020 ~2, 
-                    (month %in% c(11, 12)& year==2020)|(month %in% c(1, 2)) ~3, 
-                    month %in% c(3, 4, 5, 6) & year==2021 ~4))%>%
-  group_by(peaks, nola_geo)%>%
-  summarize(case_peaks=sum(cases))
-
-summary1<-final_nola_geo%>%
-  mutate(peaks=case_when(year==2020 ~1, 
-                         year==2021~2))%>%
-  group_by(peaks,nola_geo)%>%
-  summarize(case_peaks=sum(cases))
-
-smart_round <- function(x, digits = 0) { # somewhere on SO
-  up <- 10 ^ digits
-  x <- x * up
-  y <- floor(x)
-  indices <- tail(order(x-y), round(sum(x)) - sum(y))
-  y[indices] <- y[indices] + 1
-  y / up
-}
-waffleize <- function(xdf) {
-  data_frame(
-    peaks = rep(xdf$peaks, xdf$pct),
-    nola_geo = rep(xdf$nola_geo, xdf$pct)
-  )
-}
-
-#maybe make this just 2020 and 2021
-final<-summary1 %>% 
-  group_by(peaks) %>% 
-  mutate(pct=case_peaks/sum(case_peaks)*100) %>% 
-  #mutate(pct = (smart_round(pct, 1) * 100L) %>%  as.integer()) %>% 
-  mutate(pct=round(pct, digits=0)) %>% 
-  select(-case_peaks) %>% 
-  ungroup() %>% 
-  mutate(nola_geo = as.character(nola_geo))  %>% 
-  mutate(peaks = case_when(peaks==1~"2020",
-                           peaks==2~"2021"))%>%
-  #from first set of code- delete if above works        ifelse(peaks==1, "First half", "Second half")) 
-  select(peaks, nola_geo, pct) %>%
-  rowwise() %>% 
-  do(waffleize(.)) %>% 
-  ungroup() %>% 
-  slice(-201) %>% 
-  mutate(nola_geo=factor(nola_geo, levels=c("New Orleans",
-                                            "Other Urban",
-                                            "Suburban",
-                                            "Rural"))) %>% 
-  arrange(peaks, nola_geo) %>%
-  bind_cols(
-    map_df(seq_len(length(unique(.$peaks))), ~expand.grid(y = 1:10, x = 1:10))
-  )
-
-plot<-ggplot(final, aes(x, y)) + 
-  geom_tile(aes(fill=nola_geo), color=c("white"), size=0.5) +
-  facet_wrap(~peaks) +
-  scale_fill_manual(values=c("#66C2A5", "#FC8D62", "#8DA0CB" ,"#E78AC3")) +
-  coord_equal() +
-  labs(x=NULL, y = NULL) +
-  theme_void()+
-  theme(axis.text=element_blank(), 
-        strip.text=element_text(face="bold", size=14),
-        legend.title = element_blank()) 
-plot
-ggsave(plot, file="Results/Figure1.pdf", width=10, height=5)
 
 
