@@ -409,4 +409,62 @@ weekly<-la_covid1%>%left_join(ruca_LA1)%>%
             positives=sum(week_pos_test_count),
             tests=sum(week_test_count))
 save(weekly, file="data/weekly.Rdata")
-                             
+
+
+# elections data
+elect<-read_csv("data/Election Results from MIT/countypres_2000-2020.csv") %>% 
+  filter(state_po=="LA", year==2020, office=="PRESIDENT",grepl("DEMOCRAT|REPUBLICAN", party)) %>% 
+  mutate(prop=candidatevotes/totalvotes) %>% 
+  select(county_fips, party, prop) %>% 
+  spread(party, prop) %>% 
+  mutate(county_fips=as.numeric(county_fips), color=case_when(
+    DEMOCRAT >= 0.6 ~ "blue",
+    REPUBLICAN >= 0.6 ~ "red",
+    T ~ "purple"
+  )) %>% 
+  arrange(color, DEMOCRAT)
+
+#create a weekly +election dataset                                
+weekly_elect<-la_covid1%>%
+  mutate(county_fips=as.numeric(substr(tract_fips, 1, 5))) %>% 
+  full_join(elect)%>% 
+  group_by(color, date_endweek1) %>%                  
+  summarise(cases=sum(week_case_count),
+            positives=sum(week_pos_test_count),
+            tests=sum(week_test_count)) %>% 
+  mutate(color=factor(color, levels=c("blue", "purple", "red"),
+                      labels=c("Democrat", "Mixed", "Republican")))
+
+# create a monthly elect dataset
+final_covid<-la_covid2 %>%mutate(county_fips=as.numeric(substr(tract_fips, 1, 5))) %>% 
+  full_join(elect)%>% 
+  group_by(color, month, year) %>% 
+  summarise(cases=sum(case_month),
+            positives=sum(positive_month),
+            tests=sum(test_month))
+final_acs<-acs_data1 %>% mutate(county_fips=as.numeric(substr(tract_fips, 1, 5))) %>% 
+  full_join(elect)%>% 
+  group_by(color) %>% 
+  summarise(estimate_tract_pop_2018=sum(estimate_tract_pop_2018))
+final_color<-full_join(final_covid, final_acs) %>% 
+  mutate(incidence_rate=cases/estimate_tract_pop_2018*10000,
+         testing_rate=tests/estimate_tract_pop_2018*10000,
+         positivity_ratio=positives/tests) %>% 
+  filter(!is.na(month))
+# create a monthly death dataset w/ population estimates + SVI
+final_acs_county<-acs_data_county1 %>%
+  full_join(elect)%>% 
+  select(county_fips, county_pop_2018, color)
+final_deaths_county<-deaths1 %>% 
+  left_join(final_acs_county)%>% 
+  mutate(death_rate=deaths/county_pop_2018*100000)%>%
+  full_join(elect)%>% 
+  select(parish, county_fips, deaths, month, death_rate, color, county_pop_2018)
+
+final_deaths_color<-final_deaths_county%>%
+  group_by(month, color)%>%
+  summarize(death_color=sum(deaths),
+            geo_pop=sum(county_pop_2018))%>%
+  mutate(death_rate=death_color/geo_pop*100000)
+
+save(elect, weekly_elect, final_color, final_deaths_color, file="data/elections.rdata")                             
