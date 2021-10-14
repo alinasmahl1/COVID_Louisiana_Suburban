@@ -52,7 +52,7 @@ la_covid<-read.csv("Data/LA_COVID_TESTBYWEEK_TRACT_PUBLICUSE_sep 20.csv",  heade
 la_covid
 str(la_covid)
 head(la_covid)
-
+table(la_covid$Tract)
 #relabel for easier use 
 
 la_covid1<- la_covid %>% 
