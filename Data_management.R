@@ -2,7 +2,6 @@
 
 #*Version 1 started Sept 8, 2020 by Alina Schnake-Mahl
 #*Imports, cleans, & merges COVID data + RUCA/RUCC + ACS data on Urban/Rural/Suburban designations
-#*Version 2 Oct 7th, 2020 by Usama Bilal
 #*Minor edits to code
 
 #Import all libraries 
