@@ -236,7 +236,7 @@ dta_figure2_final<-bind_rows(dta_f1b, dta_f1c) %>%
                                "Fourth"))) %>% 
   mutate(color=factor(color, levels=c("blue", "purple", "red"),
                       labels=c("Democrat", "Mixed", "Republican")))
-figure2b<-ggplot(dta_figure2_final, aes(x=month, y=value)) +
+figure2b_elect<-ggplot(dta_figure2_final, aes(x=month, y=value)) +
   geom_line(aes(color=color, group=color)) +
   geom_point(aes(fill=color), color="black", pch=21,size=4)+
   scale_fill_manual(values=c("blue", "purple", "red"), name="")+
@@ -252,11 +252,13 @@ figure2b<-ggplot(dta_figure2_final, aes(x=month, y=value)) +
         strip.text =element_text(color="black", size=16, face="bold"),
         legend.position = "bottom",
         legend.text=element_text(color="black", size=14))
-figure2b
-ggsave(figure2b, file="Results/Figure2_elect.pdf", width=17, height=6)
+figure2b_elect
+ggsave(figure2b_elect, file="Results/Figure2_elect.pdf", width=17, height=6)
 
-ggplotly(figure2b)
-
+ggplotly(figure2b_elect)
+ # combine both
+figure2<-arrangeGrob(grobs=list(figure2b, figure2b_elect), ncol=1)
+ggsave(figure2, file="Results/Figure2_new.pdf", width=17, height=12)
 
 # figure 3
 # urbanicity-specific quintiles
@@ -388,3 +390,132 @@ figure4<-ggplot(quintiles %>% filter(!is.na(month)), aes(x=svi_q, y=value)) +
 figure4
 ggsave(figure4, file="Results/Figure4.pdf", width=20, height=10)
 
+
+# NEw Figure 3
+
+svi<-final_tract %>%ungroup() %>% 
+  filter(!duplicated(tract_fips)) %>% 
+  mutate(svi=as.numeric(RPL_THEMES-min(RPL_THEMES, na.rm=T)),
+         svi=svi/max(svi, na.rm = T)) %>% 
+  select(tract_fips, svi) 
+
+res_nola_geo<-final_tract %>% 
+  mutate(month=case_when(month %in% c(3, 4, 5, 6) & year==2020 ~"First", 
+                         month %in% c(7, 8, 9 , 10) & year==2020 ~"Second", 
+                         (month %in% c(11, 12)& year==2020)|(month %in% c(1, 2)) ~"Third", 
+                         month %in% c(3, 4, 5, 6) & year==2021 ~"Vaccine Rollout",
+                         month%in% c(7,8, 9) & year==2021~"Fourth"))%>%
+  group_by(tract_fips,nola_geo, month) %>% 
+  summarise(cases=sum(cases),
+            tests=sum(tests),
+            positives=sum(positives),
+            pop=sum(estimate_tract_pop_2018)) %>% 
+  left_join(svi) %>% 
+  group_by(nola_geo,month) %>% 
+  group_modify(~{
+    #.x<-dta %>% filter(nola_geo=="Other Urban", month=="First")
+    #print(.y$color)
+    # incid
+    m_incid<-glm.nb(cases~svi+offset(log(pop)), data=.x)
+    # posit
+    m_posit<-glm.nb(positives~svi+offset(log(tests)), data=.x %>% filter(tests>0))
+    bind_rows(tidy(m_incid) %>% filter(term=="svi") %>% mutate(outcome="incid"),
+              tidy(m_posit) %>% filter(term=="svi") %>% mutate(outcome="posit")) %>% 
+      mutate(est=exp(estimate),
+             lci=exp(estimate-1.96*std.error),
+             uci=exp(estimate+1.96*std.error))
+  }) %>% mutate(outcome=factor(outcome, levels=c( "posit",
+                                                  "incid"),
+                               labels = c("Positivity", "Incidence"))) %>% 
+  mutate(month=factor(month, levels=c("First", "Second", "Third", "Vaccine Rollout", "Fourth"),
+                      labels=c("First",
+                               "Second",
+                               "Third", 
+                               "Vaccine Rollout", 
+                               "Fourth"))) 
+res_color<-final_tract %>% 
+  mutate(month=case_when(month %in% c(3, 4, 5, 6) & year==2020 ~"First", 
+                         month %in% c(7, 8, 9 , 10) & year==2020 ~"Second", 
+                         (month %in% c(11, 12)& year==2020)|(month %in% c(1, 2)) ~"Third", 
+                         month %in% c(3, 4, 5, 6) & year==2021 ~"Vaccine Rollout",
+                         month%in% c(7,8, 9) & year==2021~"Fourth"))%>%
+  left_join(elect %>% select(county_fips, color)) %>% 
+  group_by(tract_fips,color, month) %>% 
+  summarise(cases=sum(cases),
+            tests=sum(tests),
+            positives=sum(positives),
+            pop=sum(estimate_tract_pop_2018)) %>% 
+  left_join(svi) %>% 
+  group_by(color,month) %>% 
+  group_modify(~{
+    #.x<-dta %>% filter(color=="Other Urban", month=="First")
+    #print(.y$color)
+    # incid
+    m_incid<-glm.nb(cases~svi+offset(log(pop)), data=.x)
+    # posit
+    m_posit<-glm.nb(positives~svi+offset(log(tests)), data=.x %>% filter(tests>0))
+    bind_rows(tidy(m_incid) %>% filter(term=="svi") %>% mutate(outcome="incid"),
+              tidy(m_posit) %>% filter(term=="svi") %>% mutate(outcome="posit")) %>% 
+      mutate(est=exp(estimate),
+             lci=exp(estimate-1.96*std.error),
+             uci=exp(estimate+1.96*std.error))
+  }) %>% mutate(outcome=factor(outcome, levels=c( "posit",
+                                                  "incid"),
+                               labels = c("Positivity", "Incidence"))) %>% 
+  mutate(month=factor(month, levels=c("First", "Second", "Third", "Vaccine Rollout", "Fourth"),
+                      labels=c("First",
+                               "Second",
+                               "Third", 
+                               "Vaccine Rollout", 
+                               "Fourth")),
+         color=factor(color, levels=c("blue", "purple", "red"),
+                      labels=c("Democrat", "Mixed", "Republican")))
+
+ylim<-c(
+  min(c(min(res_nola_geo$lci), min(res_color$lci))),
+  max(c(max(res_nola_geo$uci), max(res_color$uci)))
+)
+
+f3a<-ggplot(res_nola_geo, aes(x=month, y=est, group=nola_geo)) +
+  geom_hline(yintercept = 1, lty=2)+
+  #geom_ribbon(aes(fill=nola_geo, ymin=lci, ymax=uci), alpha=0.3)+
+  geom_linerange(aes(color=nola_geo, ymin=lci, ymax=uci), position=position_dodge(width=0.2))+
+  geom_line(aes(color=nola_geo), position=position_dodge(width=0.2)) +
+  geom_point(aes(fill=nola_geo), color="black", pch=21,size=4, position=position_dodge(width=0.2))+
+  scale_color_brewer(type="qual", palette=2, name="")+
+  scale_fill_brewer(type="qual", palette=2, name="")+
+  scale_y_continuous(trans="log", breaks=2^(-1:4), limits=ylim) +
+  labs(x="Wave", y="Relative Index of Inequality for the\nSocial Vulnerability Index (95% CI)") +
+  guides(fill="none")+
+  facet_wrap(~outcome) +
+  theme_bw()+
+  theme(axis.text=element_text(color="black", size=14),
+        axis.title=element_text(color="black", size=14, face="bold"),
+        plot.title=element_text(color="black", size=20, face="bold"),
+        strip.background = element_blank(),
+        strip.text =element_text(color="black", size=16, face="bold"),
+        legend.position = "bottom",
+        legend.text=element_text(color="black", size=14))
+
+f3b<-ggplot(res_color, aes(x=month, y=est, group=color)) +
+  geom_hline(yintercept = 1, lty=2)+
+  #geom_ribbon(aes(fill=color, ymin=lci, ymax=uci), alpha=0.3)+
+  geom_linerange(aes(color=color, ymin=lci, ymax=uci), position=position_dodge(width=0.2))+
+  geom_line(aes(color=color), position=position_dodge(width=0.2)) +
+  geom_point(aes(fill=color), color="black", pch=21,size=4, position=position_dodge(width=0.2))+
+  scale_color_manual(values=c("blue", "purple", "red"), name="")+
+  scale_fill_manual(values=c("blue", "purple", "red"), name="")+
+  scale_y_continuous(trans="log", breaks=2^(-1:4), limits=ylim) +
+  labs(x="Wave", y="Relative Index of Inequality for the\nSocial Vulnerability Index (95% CI)") +
+  guides(fill="none")+
+  facet_wrap(~outcome) +
+  theme_bw()+
+  theme(axis.text=element_text(color="black", size=14),
+        axis.title=element_text(color="black", size=14, face="bold"),
+        plot.title=element_text(color="black", size=20, face="bold"),
+        strip.background = element_blank(),
+        strip.text =element_text(color="black", size=16, face="bold"),
+        legend.position = "bottom",
+        legend.text=element_text(color="black", size=14))
+figure3<-arrangeGrob(grobs=list(f3a, f3b), ncol=1)
+ggsave("Results/Figure3_new.pdf", figure3, width=15, height=12.5)
