@@ -47,7 +47,7 @@ rucc_county1<-rucc_county %>% rename(county_fips=ï..FIPS, state=State, county=C
 #import Louisiana covid data 
 # have already downloaded data and converted to CSV
 
-la_covid<-read.csv("Data/LA_COVID_TESTBYWEEK_TRACT_PUBLICUSE_sep 20.csv",  header=TRUE, stringsAsFactors = FALSE)
+la_covid<-read.csv("Data/LA_COVID_TESTBYWEEK_TRACT_PUBLICUSE_oct28.csv",  header=TRUE, stringsAsFactors = FALSE)
 la_covid
 str(la_covid)
 head(la_covid)
@@ -61,8 +61,8 @@ la_covid1<- la_covid %>%
   mutate(date_startweek1= mdy(date_startweek), #convert to date format
          date_endweek1=mdy(date_endweek), 
          month=month(date_endweek1), 
-         year=year(date_endweek1)) %>%
-  subset(date_endweek<"9/8/2021")
+         year=year(date_endweek1)) 
+#need to subset if we include more data than last date of upload.
 
 str(la_covid1)
 #create monthly counts  
@@ -90,9 +90,9 @@ table(checkfull$number)
 
 deaths_jh<-fread("data/time_series_covid19_deaths_US.csv", header=TRUE) %>%
   subset(Province_State=="Louisiana")%>%
-  #only keep vars we'll need, drop obs after June 30th 
+  #only keep vars we'll need
   select(c(FIPS, Admin2, "3/31/20", "4/30/20", "5/31/20", "6/30/20", "7/31/20", "8/31/20", "9/30/20", "10/31/20", "11/30/20", "12/31/20",
-           "1/31/21", "2/28/21", "3/31/21", "4/30/21", "5/31/21", "6/30/21", "7/31/21", "9/1/21"))%>%
+           "1/31/21", "2/28/21", "3/31/21", "4/30/21", "5/31/21", "6/30/21", "7/31/21", "8/31/21", "9/30/21", "10/27/21"))%>%
 #remove observation w/ unassigned 
    subset(Admin2!="Out of LA")
 
@@ -100,7 +100,7 @@ deaths_jh1<- deaths_jh %>%
   rename(parish=Admin2, county_fips=FIPS, march20="3/31/20", april20="4/30/20", may20="5/31/20", june20="6/30/20",
                        july20="7/31/20", august20="8/31/20", september20="9/30/20", october20="10/31/20", november20="11/30/20", december20="12/31/20", 
                         january21="1/31/21", february21="2/28/21", march21="3/31/21", april21="4/30/21", may21="5/31/21", 
-                        june21="6/30/21", july21="7/31/21", august21="9/1/21")%>%
+                        june21="6/30/21", july21="7/31/21", august21="8/31/21", september21="9/30/21", october21="10/27/21" )%>%
          group_by(parish)%>%
            mutate(deaths_3=march20,
                   deaths_4=april20-march20, 
@@ -119,9 +119,11 @@ deaths_jh1<- deaths_jh %>%
                   deaths_17=may21-april21, 
                   deaths_18=june21-may21, 
                   deaths_19=july21-june21, 
-                  deaths_20=august21-july21)%>%
+                  deaths_20=august21-july21, 
+                  deaths_21=september21-august21, 
+                  deaths_22=october21-september21)%>%
 #REMEMBER TO CHANGE DEATHS_3: deaths_20 to increase number of months
-  select(c(parish, county_fips,  deaths_3:deaths_20))%>%
+  select(c(parish, county_fips,  deaths_3:deaths_22))%>%
 #remove row with data from unassigned county (n=941)
   subset(parish!="Unassigned")
 
@@ -146,7 +148,9 @@ deaths1<-deaths_jh1%>%
                          date=="deaths_17"~17, 
                          date=="deaths_18"~18, 
                          date=="deaths_19"~19, 
-                         date=="deaths_20"~20)) %>%
+                         date=="deaths_20"~20, 
+                         date=="deaths_21"~21, 
+                         date=="deaths_22"~22)) %>%
   select(-date) %>%
   arrange(parish, county_fips, month)
 
@@ -166,7 +170,7 @@ acs_data<-get_acs(geography="tract",
                               race_total="B02001_001", medincome = "B19013_001", 
                               ratio_poverty="B05010_001", below_poverty="B05010_010"),
                   state="LA",
-                  year=2018)
+                  year=2019)
 
 acs_data_county<-get_acs(geography="county",
                          variables=c(county_pop_2018 = "B01003_001", 
@@ -174,7 +178,7 @@ acs_data_county<-get_acs(geography="county",
                                      black_alone="B02001_003",
                                      race_total="B02001_001"),
                          state="LA",
-                         year=2018)
+                         year=2019)
 
 #pivot wider so data has 1 row/ census tract 
 acs_data1<-acs_data %>%
@@ -467,3 +471,4 @@ final_deaths_color<-final_deaths_county%>%
   mutate(death_rate=death_color/geo_pop*100000)
 
 save(elect, weekly_elect, final_color, final_deaths_color, file="data/elections.rdata")                             
+
