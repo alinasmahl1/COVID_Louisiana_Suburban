@@ -47,7 +47,7 @@ rucc_county1<-rucc_county %>% rename(county_fips=ï..FIPS, state=State, county=C
 #import Louisiana covid data 
 # have already downloaded data and converted to CSV
 
-la_covid<-read.csv("Data/LA_COVID_TESTBYWEEK_TRACT_PUBLICUSE_oct28.csv",  header=TRUE, stringsAsFactors = FALSE)
+la_covid<-read.csv("Data/LA_COVID_TESTBYWEEK_TRACT_PUBLICUSE_oct27.csv",  header=TRUE, stringsAsFactors = FALSE)
 la_covid
 str(la_covid)
 head(la_covid)
@@ -82,7 +82,6 @@ checkfull<-la_covid2 %>%
   group_by(tract_fips)%>% 
   summarise(number = n())
 table(checkfull$number)
-#all ct's have 16 months so no need to set to zero.
 
 
 #----------------------------------------------------------------------------
@@ -383,6 +382,7 @@ save(final_nola_geo,
      final_tract,
      final_deaths_county,
      final_deaths_geo, file="data/final_data.rdata")
+
 #view total tests, total postivie cases, total confirmed cases
 
 totals<-final_nola_geo%>%
@@ -390,6 +390,15 @@ totals<-final_nola_geo%>%
          summarize(case_total=sum(cases), 
               positive_total=sum(positives), 
               tests_total=sum(tests))
+
+#number of tracts
+nums<-unique(final_tract$tract_fips)
+length(nums)
+
+#tracts by geo
+tract_geo<-final_tract%>%
+  filter(month==12)
+table(tract_geo$nola_geo)
 
 #save df w/ total deaths by geo
 sum_county<-final_acs_county%>%

@@ -128,19 +128,19 @@ ggsave(figure1b, file="Results/Figure1b_elect.pdf", width=15, height=6)
 figure1<-grid.arrange(figure1a,figure1b,
                       ncol = 1, nrow = 2)
 g <- arrangeGrob(figure1a,figure1b,  nrow=2) #generates g
-ggsave(g, file="Results/figure1_elect.pdf", width=15, height=10) #saves g
+ggsave(g, file="Results/figure1_elect.pdf", width=10, height=8) #saves g
 
 
 # figure 2:
 dta_f1b<-final_nola_geo %>% 
-  mutate(wave=case_when(month %in% c(3, 4, 5) & year==2020 ~"First", 
-                         month %in% c(6, 7, 8, 9 , 10) & year==2020 ~"Second", 
+  mutate(wave=case_when(month %in% c(3, 4, 5, 6) & year==2020 ~"First", 
+                         month %in% c(7, 8, 9 , 10) & year==2020 ~"Second", 
                          (month %in% c(11, 12)& year==2020)|(month %in% c(1, 2, 3)) ~"Third", 
                          month %in% c(4, 5, 6) & year==2021 ~"Vaccine Rollout",
                          month%in% c(7,8, 9, 10) & year==2021~"Fourth"))%>%
            group_by(nola_geo, wave) %>%
-  summarise(months=as.numeric(case_when(wave=="First"~3, 
-                             wave=="Second"~5,
+  summarise(months=as.numeric(case_when(wave=="First"~4, 
+                             wave=="Second"~4,
                              wave=="Third" ~5, 
                              wave=="Vaccine Rollout"~3, 
                              wave=="Fourth"~4)),
@@ -150,13 +150,13 @@ dta_f1b<-final_nola_geo %>%
             pop=sum(estimate_tract_pop_2018)) %>% 
   mutate(testing_rate=(tests/months)/pop*10000,
          incidence_rate=(cases/months)/pop*10000,
-         positivity_ratio=(positives/months)/tests*100) %>% 
+         positivity_ratio=(positives/months)/(tests/months)*100) %>% 
   pivot_longer(cols = c(incidence_rate, testing_rate, positivity_ratio)) %>%
   select(nola_geo, wave, name, value)
 
 dta_f1c<-final_deaths_geo %>% 
-  mutate(wave=case_when(month %in% c(3, 4, 5)  ~"First", 
-                         month %in% c(6, 7, 8, 9 , 10) ~"Second", 
+  mutate(wave=case_when(month %in% c(3, 4, 5, 6)  ~"First", 
+                         month %in% c(7, 8, 9 , 10) ~"Second", 
                          month %in% c(11, 12, 13, 14, 15) ~"Third", 
                          month %in% c( 16, 17, 18) ~"Vaccine Rollout", 
                          month %in% c(19, 20, 21, 22) ~"Fourth")) %>%
@@ -204,14 +204,14 @@ ggplotly(figure2b)
 
 # figure 2 by pol
 dta_f1b<-final_color %>% 
-  mutate(wave=case_when(month %in% c(3, 4, 5) & year==2020 ~"First", 
-                         month %in% c(6, 7, 8, 9 , 10) & year==2020 ~"Second", 
+  mutate(wave=case_when(month %in% c(3, 4, 5, 6) & year==2020 ~"First", 
+                         month %in% c(7, 8, 9 , 10) & year==2020 ~"Second", 
                          (month %in% c(11, 12)& year==2020)|(month %in% c(1, 2, 3)) ~"Third", 
                          month %in% c(4, 5, 6) & year==2021 ~"Vaccine Rollout",
                          month%in% c(7,8, 9, 10) & year==2021~"Fourth"))%>%
   group_by(color, wave) %>% 
-  summarise(months=as.numeric(case_when(wave=="First"~3, 
-                                        wave=="Second"~5,
+  summarise(months=as.numeric(case_when(wave=="First"~4, 
+                                        wave=="Second"~4,
                                         wave=="Third" ~5, 
                                         wave=="Vaccine Rollout"~3, 
                                         wave=="Fourth"~4)),
@@ -221,12 +221,12 @@ dta_f1b<-final_color %>%
             pop=sum(estimate_tract_pop_2018)) %>% 
   mutate(testing_rate=(tests/months)/pop*10000,
          incidence_rate=(cases/months)/pop*10000,
-         positivity_ratio=(positives/months)/tests*100) %>% 
+         positivity_ratio=(positives/months)/(tests/months)*100) %>% 
   pivot_longer(cols = c(incidence_rate, testing_rate, positivity_ratio)) %>% 
   select(color, wave, name, value)
 dta_f1c<-final_deaths_color %>% 
-  mutate(wave=case_when(month %in% c(3, 4, 5)  ~"First", 
-                         month %in% c(6, 7, 8, 9 , 10) ~"Second", 
+  mutate(wave=case_when(month %in% c(3, 4, 5, 6)  ~"First", 
+                         month %in% c(7, 8, 9 , 10) ~"Second", 
                          month %in% c(11, 12, 13, 14, 15) ~"Third", 
                          month %in% c(16, 17, 18) ~"Vaccine Rollout", 
                          month %in% c(19, 20, 21, 22) ~"Fourth")) %>%
@@ -288,14 +288,14 @@ quintiles<-final_tract %>%
 
 quintiles<-full_join(final_tract, quintiles) %>% 
   # test
-  mutate(wave=case_when(month %in% c(3, 4, 5) & year==2020 ~"First", 
-                         month %in% c(6, 7, 8, 9 , 10) & year==2020 ~"Second", 
+  mutate(wave=case_when(month %in% c(3, 4, 5, 6) & year==2020 ~"First", 
+                         month %in% c(7, 8, 9 , 10) & year==2020 ~"Second", 
                          (month %in% c(11, 12)& year==2020)|(month %in% c(1, 2, 3)) ~"Third", 
                          month %in% c( 4, 5, 6) & year==2021 ~"Vaccine Rollout", 
                          month %in% c(7,8, 9 , 10) & year==2021~"Fourth"))%>%
   group_by(nola_geo, wave, svi_q) %>%
-    summarise(months=as.numeric(case_when(wave=="First"~3, 
-                                          wave=="Second"~5,
+    summarise(months=as.numeric(case_when(wave=="First"~4, 
+                                          wave=="Second"~4,
                                           wave=="Third" ~5, 
                                           wave=="Vaccine Rollout"~3, 
                                           wave=="Fourth"~4)),
@@ -305,7 +305,7 @@ quintiles<-full_join(final_tract, quintiles) %>%
             pop=sum(estimate_tract_pop_2018)) %>%
   mutate(testing_rate=(tests/months)/pop*10000,
          incidence_rate=(cases/months)/pop*10000,
-         positivity_ratio=(positives/months)/tests*100) %>%
+         positivity_ratio=(positives/months)/(tests/months)*100) %>%
   select(nola_geo, wave, svi_q, testing_rate, incidence_rate, positivity_ratio) %>%
   pivot_longer(cols=c(testing_rate, positivity_ratio, incidence_rate))%>%
   mutate(name=factor(name, levels=c("testing_rate",
@@ -320,7 +320,7 @@ quintiles<-full_join(final_tract, quintiles) %>%
                                "Fourth"))) %>% 
   filter(name!="Testing")
 
-figure3<-ggplot(quintiles %>% filter(!is.na(month)), aes(x=svi_q, y=value)) +
+figure3<-ggplot(quintiles %>% filter(!is.na(wave)), aes(x=svi_q, y=value)) +
   geom_line(aes(color=nola_geo)) +
   geom_point(aes(fill=nola_geo), color="black", pch=21, size=4)+
   facet_grid(name~wave, scales="free_y")+
@@ -360,24 +360,24 @@ quintiles<-final_tract %>%
 
 quintiles<-full_join(final_tract, quintiles) %>% 
   # test
-  mutate(wave=case_when(month %in% c(3, 4, 5) & year==2020 ~"First", 
-                         month %in% c(6, 7, 8, 9 , 10) & year==2020 ~"Second", 
+  mutate(wave=case_when(month %in% c(3, 4, 5, 6) & year==2020 ~"First", 
+                         month %in% c(7, 8, 9 , 10) & year==2020 ~"Second", 
                          (month %in% c(11, 12)& year==2020)|(month %in% c(1, 2, 3)) ~"Third", 
                          month %in% c(4, 5, 6) & year==2021 ~"Vaccine Rollout", 
                          month %in% c(7, 8, 9, 10) & year==2021~"Fourth"))%>%
   group_by(color, wave, svi_q) %>%
-  summarise(case_when(wave=="First"~3, 
-                      wave=="Second"~5,
+  summarise(months=case_when(wave=="First"~4, 
+                      wave=="Second"~4,
                       wave=="Third" ~5, 
                       wave=="Vaccine Rollout"~3, 
                       wave=="Fourth"~4),
             cases=sum(cases),
             tests=sum(tests),
             positives=sum(positives),
-            pop=sum(estimate_tract_pop_2018)) %>%
+            pop=sum(estimate_tract_pop_2018))%>%
   mutate(testing_rate=(tests/months)/pop*10000,
          incidence_rate=(cases/months)/pop*10000,
-         positivity_ratio=(positives/months)/tests*100) %>%
+         positivity_ratio=(positives/months)/(tests/months)*100)%>% 
   select(color, wave, svi_q, testing_rate, incidence_rate, positivity_ratio) %>%
   pivot_longer(cols=c(testing_rate, positivity_ratio, incidence_rate))%>%
   mutate(name=factor(name, levels=c("testing_rate",
@@ -394,7 +394,7 @@ quintiles<-full_join(final_tract, quintiles) %>%
                       labels=c("Democrat", "Mixed", "Republican"))) %>% 
   filter(name!="Testing")
 
-figure4<-ggplot(quintiles %>% filter(!is.na(month)), aes(x=svi_q, y=value)) +
+figure4<-ggplot(quintiles %>% filter(!is.na(wave)), aes(x=svi_q, y=value)) +
   geom_line(aes(color=color)) +
   geom_point(aes(fill=color), color="black", pch=21, size=4)+
   facet_grid(name~wave, scales="free_y")+
@@ -427,14 +427,14 @@ svi<-final_tract %>%ungroup() %>%
   select(tract_fips, svi) 
 
 res_nola_geo<-final_tract %>% 
-  mutate(wave=case_when(month %in% c(3, 4, 5) & year==2020 ~"First", 
-                         month %in% c(6, 7, 8, 9 , 10) & year==2020 ~"Second", 
+  mutate(wave=case_when(month %in% c(3, 4, 5, 6) & year==2020 ~"First", 
+                         month %in% c(7, 8, 9 , 10) & year==2020 ~"Second", 
                          (month %in% c(11, 12)& year==2020)|(month %in% c(1, 2, 3)) ~"Third", 
                          month %in% c(4, 5, 6) & year==2021 ~"Vaccine Rollout",
                          month%in% c(7,8, 9, 10) & year==2021~"Fourth"))%>%
   group_by(tract_fips,nola_geo, wave) %>% 
-  summarise(case_when(wave=="First"~3, 
-                      wave=="Second"~5,
+  summarise(months=case_when(wave=="First"~4, 
+                      wave=="Second"~4,
                       wave=="Third" ~5, 
                       wave=="Vaccine Rollout"~3, 
                       wave=="Fourth"~4),
@@ -466,8 +466,8 @@ res_nola_geo<-final_tract %>%
                                "Vaccine Rollout", 
                                "Fourth"))) 
 res_color<-final_tract %>% 
-  mutate(wave=case_when(month %in% c(3, 4, 5) & year==2020 ~"First", 
-                         month %in% c(6, 7, 8, 9 , 10) & year==2020 ~"Second", 
+  mutate(wave=case_when(month %in% c(3, 4, 5, 6) & year==2020 ~"First", 
+                         month %in% c(7, 8, 9 , 10) & year==2020 ~"Second", 
                          (month %in% c(11, 12)& year==2020)|(month %in% c(1, 2, 3)) ~"Third", 
                          month %in% c(4, 5, 6) & year==2021 ~"Vaccine Rollout",
                          month%in% c(7,8, 9, 10) & year==2021~"Fourth"))%>%
@@ -552,3 +552,4 @@ f3b<-ggplot(res_color, aes(x=wave, y=est, group=color)) +
 figure3<-arrangeGrob(grobs=list(f3a, f3b), ncol=1)
 ggsave("Results/Figure3_new.pdf", figure3, width=15, height=12.5)
 figure3
+
