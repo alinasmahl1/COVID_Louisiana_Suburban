@@ -7,8 +7,8 @@ library(broom)
 library(plotly)
 library(hrbrthemes)
 library(gridExtra)
+library(msm)
 library(ggpubr)
-
 
 select<-dplyr::select
 load("data/final_data.rdata")
@@ -417,9 +417,6 @@ ggsave(figure4, file="Results/Figure4.pdf", width=20, height=10)
 
 
 # NEw Figure 3
-
-
-
 svi<-final_tract %>%ungroup() %>% 
   filter(!duplicated(tract_fips)) %>% 
   mutate(svi=as.numeric(RPL_THEMES-min(RPL_THEMES, na.rm=T)),
@@ -445,17 +442,34 @@ res_nola_geo<-final_tract %>%
   left_join(svi) %>% 
   group_by(nola_geo,wave) %>% 
   group_modify(~{
-    #.x<-dta %>% filter(nola_geo=="Other Urban", month=="First")
+    #.x<-dta %>% filter(nola_geo=="Other Urban", wave=="Fourth")
     #print(.y$color)
     # incid
     m_incid<-glm.nb(cases~svi+offset(log(pop)), data=.x)
     # posit
     m_posit<-glm.nb(positives~svi+offset(log(tests)), data=.x %>% filter(tests>0))
-    bind_rows(tidy(m_incid) %>% filter(term=="svi") %>% mutate(outcome="incid"),
-              tidy(m_posit) %>% filter(term=="svi") %>% mutate(outcome="posit")) %>% 
-      mutate(est=exp(estimate),
-             lci=exp(estimate-1.96*std.error),
-             uci=exp(estimate+1.96*std.error))
+    
+    logRII_incid<-summary(m_incid)$coefficients["svi",1]
+    selogrii_incid<-summary(m_incid)$coefficients["svi",2]
+    serii_incid<-deltamethod(~exp(x1),logRII,selogrii^2)
+    logRII_posit<-summary(m_posit)$coefficients["svi",1]
+    selogrii_posit<-summary(m_posit)$coefficients["svi",2]
+    serii_posit<-deltamethod(~exp(x1),logRII,selogrii^2)
+    # compile
+    bind_rows(data.frame(est=logRII_incid,
+                         se=selogrii_incid) %>% 
+                mutate(lci=exp(est-1.96*se),
+                       uci=exp(est+1.96*se),
+                       est=exp(est)) %>% 
+                select(est, lci, uci) %>% 
+                mutate(outcome="incid"),
+              data.frame(est=logRII_posit,
+                         se=selogrii_posit) %>% 
+                mutate(lci=exp(est-1.96*se),
+                       uci=exp(est+1.96*se),
+                       est=exp(est)) %>% 
+                select(est, lci, uci) %>% 
+                mutate(outcome="posit"))
   }) %>% mutate(outcome=factor(outcome, levels=c( "posit",
                                                   "incid"),
                                labels = c("Positivity", "Incidence"))) %>% 
