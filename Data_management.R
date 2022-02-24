@@ -160,14 +160,32 @@ deaths1<-deaths_jh1%>%
 # census_api_key("xxxx", install=TRUE)
 
 #view all variables
-#v17 <- load_variables(2018, "acs5", cache = TRUE)
+v17 <- load_variables(2018, "acs5", cache = TRUE)
 #View(v17)
 
 #pull selected variables (poverty, total pop, race, median income)
 acs_data<-get_acs(geography="tract",
                   variables=c(tract_pop_2018 = "B01003_001", white_alone="B02001_002", 
-                              race_total="B02001_001", medincome = "B19013_001", 
-                              ratio_poverty="B05010_001", below_poverty="B05010_010"),
+                              race_total="B02001_001", mhi = "B19013_001", 
+                              ratio_poverty="B05010_001", below_poverty="B05010_010", 
+                              ## overcrowding denominator
+                                 overcrowd_denom="B25014_001",
+                              # #overcrowding 1 and more
+                              own_1="B25014_005",rent_1= "B25014_011",
+                               #overcrowding 1.5more
+                              own_1p5="B25014_006", rent_1p5="B25014_012",
+                              #overcrowding 2more
+                              own_2="B25014_007", rent_2="B25014_013",
+                              ## Food service, personal care, and service ocupations
+                              food_M= "C24010_024", food_F= "C24010_060", service_M="C24010_026", service_F="C24010_062",
+                              ## Ocupation Denom
+                              occ_denom= "C24010_001", 
+                              #education denom
+                              educ_denom="B15003_001",
+                              ## HS
+                              hs= "B15003_017", ged="B15003_018", college1="B15003_019", college2="B15003_020",college3="B15003_021",
+                              #college
+                              college4="B15003_022",masters="B15003_023", masters2="B15003_024",doct= "B15003_025"),
                   state="LA",
                   year=2019)
 
@@ -175,21 +193,40 @@ acs_data_county<-get_acs(geography="county",
                          variables=c(county_pop_2018 = "B01003_001", 
                                      white_alone="B02001_002", 
                                      black_alone="B02001_003",
-                                     race_total="B02001_001"),
+                                     race_total="B02001_001", 
+                                     mhi="B19013_001", 
+                                     ## overcrowding denominator
+                                     overcrowd_denom="B25014_001",
+                                     # #overcrowding 1 and more
+                                     own_1="B25014_005",rent_1= "B25014_011",
+                                     #overcrowding 1.5more
+                                     own_1p5="B25014_006", rent_1p5="B25014_012",
+                                     #overcrowding 2more
+                                     own_2="B25014_007", rent_2="B25014_013",
+                                     ## Food service, personal care, and service ocupations
+                                     food_M= "C24010_024", food_F= "C24010_060", service_M="C24010_026", service_F="C24010_062",
+                                     ## Ocupation Denom
+                                     occ_denom= "C24010_001", 
+                                     #education denom
+                                     educ_denom="B15003_001",
+                                     ## HS
+                                    hs= "B15003_017", ged="B15003_018", college1="B15003_019", college2="B15003_020",college3="B15003_021",
+                                    #college
+                                    college4="B15003_022",masters="B15003_023", masters2="B15003_024",doct= "B15003_025"),
                          state="LA",
                          year=2019)
 
 #pivot wider so data has 1 row/ census tract 
 acs_data1<-acs_data %>%
   pivot_wider(id_cols = c(GEOID, NAME), names_from=variable,  
-              values_from=c(estimate,moe)) %>%
+              values_from=estimate) %>%
   rename(tract_fips=GEOID) %>%
   mutate(tract_fips=as.numeric(tract_fips),
-         nonhisp_white=estimate_race_total-estimate_white_alone, 
-         pct_nonwhite=nonhisp_white/estimate_race_total, 
-         pct_poverty=estimate_below_poverty/estimate_ratio_poverty)
+         pct_crowded=((own_1+own_1p5+ own_2+ rent_1+ rent_1p5+rent_2)/overcrowd_denom)*100,
+         pct_service = ((food_M+food_F+service_M+service_F)/occ_denom)*100, 
+         pct_hsplus = ((hs+ ged+ college1+ college2+college3+college4+masters+masters2+doct)/educ_denom)*100)
 
-str(acs_data1)
+str(acs_data1)estimate
 head(acs_data1)
 
 #
@@ -198,8 +235,11 @@ acs_data_county1<-acs_data_county %>%
   pivot_wider(id_cols = c(GEOID, NAME), names_from=variable,  
               values_from=c(estimate)) %>%
   rename(county_fips=GEOID) %>% 
-  mutate(county_fips=as.numeric(county_fips))%>%
-  select(c(county_fips, county_pop_2018 ))
+  mutate(county_fips=as.numeric(county_fips), 
+         pct_crowded=((own_1+own_1p5+ own_2+ rent_1+ rent_1p5+rent_2)/overcrowd_denom)*100,
+         pct_service = ((food_M+food_F+service_M+service_F)/occ_denom)*100, 
+         pct_hsplus = ((hs+ ged+ college1+ college2+college3+college4+masters+masters2+doct)/educ_denom)*100)%>%
+  select(c(county_fips, county_pop_2018, mhi, pct_service, pct_crowded, pct_hsplus))
 
 #---------------------------------------------------------------------------------
 #import the CDC SVI: 
@@ -233,6 +273,8 @@ svi_county1<-svi_county %>%
          RPL_THEME4=ifelse(RPL_THEME4==-999, NA, RPL_THEME4)) %>% 
   mutate_at(-1, scale)
 head(svi_county1)
+
+
 #---------------------------------------------------------------------------------
 #data cleaning/preparing for join on RUCA analysis (may be useful for subsequent analysis)
 #---------------------------------------------------------------------------------
@@ -338,10 +380,10 @@ final_covid<-la_covid2 %>% left_join(ruca_LA1) %>%
             tests=sum(test_month))
 final_acs<-acs_data1 %>% left_join(ruca_LA1) %>% 
   group_by(nola_geo) %>% 
-  summarise(estimate_tract_pop_2018=sum(estimate_tract_pop_2018))
+  summarise(tract_pop_2018=sum(tract_pop_2018))
 final_nola_geo<-full_join(final_covid, final_acs) %>% 
-  mutate(incidence_rate=cases/estimate_tract_pop_2018*10000,
-         testing_rate=tests/estimate_tract_pop_2018*10000,
+  mutate(incidence_rate=cases/tract_pop_2018*10000,
+         testing_rate=tests/tract_pop_2018*10000,
          positivity_ratio=positives/tests) %>% 
   filter(!is.na(month))
 # create a monthly tract dataset, with nola_geo and SVI 
@@ -351,20 +393,20 @@ final_tract<-la_covid2 %>%
             positives=sum(positive_month),
             tests=sum(test_month)) %>% 
   left_join(acs_data1) %>% 
-  mutate(incidence_rate=cases/estimate_tract_pop_2018*10000,
-         testing_rate=tests/estimate_tract_pop_2018*10000,
+  mutate(incidence_rate=cases/tract_pop_2018*10000,
+         testing_rate=tests/tract_pop_2018*10000,
          positivity_ratio=positives/tests) %>% 
   left_join(ruca_LA1) %>% 
   left_join(SVI1)
 # create a monthly death dataset w/ population estimates + SVI
 final_acs_county<-acs_data_county1 %>%
   left_join(rucc_LA1)%>%
-  select(county_fips, county_pop_2018, nola_geo)
+  select(county_fips, county_pop_2018, nola_geo, mhi, pct_crowded, pct_service)
 final_deaths_county<-deaths1 %>% 
   left_join(final_acs_county)%>% 
   mutate(death_rate=deaths/county_pop_2018*100000)%>%
   left_join(svi_county1) %>%
-    select(parish, county_fips, deaths, month, death_rate, nola_geo, county_pop_2018, RPL_THEME1:RPL_THEMES)
+    select(parish, county_fips, deaths, month, death_rate, nola_geo, county_pop_2018, RPL_THEME1:RPL_THEMES, mhi, pct_crowded, pct_service)
 
 final_deaths_geo<-final_deaths_county%>%
   group_by(month, nola_geo)%>%
@@ -382,6 +424,15 @@ save(final_nola_geo,
      final_tract,
      final_deaths_county,
      final_deaths_geo, file="data/final_data.rdata")
+
+
+#get mean & range tract and parish size 
+
+summary(final_acs_county)
+
+tracts<-final_tract%>%
+  filter(month==12)
+summary(tracts)
 
 #view total tests, total postivie cases, total confirmed cases
 
@@ -457,10 +508,10 @@ final_covid<-la_covid2 %>%mutate(county_fips=as.numeric(substr(tract_fips, 1, 5)
 final_acs<-acs_data1 %>% mutate(county_fips=as.numeric(substr(tract_fips, 1, 5))) %>% 
   full_join(elect)%>% 
   group_by(color) %>% 
-  summarise(estimate_tract_pop_2018=sum(estimate_tract_pop_2018))
+  summarise(tract_pop_2018=sum(tract_pop_2018))
 final_color<-full_join(final_covid, final_acs) %>% 
-  mutate(incidence_rate=cases/estimate_tract_pop_2018*10000,
-         testing_rate=tests/estimate_tract_pop_2018*10000,
+  mutate(incidence_rate=cases/tract_pop_2018*10000,
+         testing_rate=tests/tract_pop_2018*10000,
          positivity_ratio=positives/tests) %>% 
   filter(!is.na(month))
 # create a monthly death dataset w/ population estimates + SVI

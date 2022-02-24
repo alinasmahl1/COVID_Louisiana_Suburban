@@ -275,78 +275,9 @@ ggplotly(figure2b_elect)
 figure2<-arrangeGrob(grobs=list(figure2b, figure2b_elect), ncol=1)
 ggsave(figure2, file="Results/Figure2_new.pdf", width=17, height=12)
 
-# figure 3
-# urbanicity-specific quintiles
-quintiles<-final_tract %>% 
-  # getting a unique value for each census tract
-  filter(month==12) %>% 
-  group_by(nola_geo) %>% 
-  mutate(svi_q=cut(RPL_THEMES, 
-                   breaks = quantile(RPL_THEMES, probs=seq(0, 1, by=0.2), na.rm=T), 
-                   include.lowest = T) %>% as.numeric) %>%
-  select(nola_geo, tract_fips, svi_q, svi=RPL_THEMES)
-
-quintiles<-full_join(final_tract, quintiles) %>% 
-  # test
-  mutate(wave=case_when(month %in% c(3, 4, 5, 6) & year==2020 ~"First", 
-                         month %in% c(7, 8, 9 , 10) & year==2020 ~"Second", 
-                         (month %in% c(11, 12)& year==2020)|(month %in% c(1, 2, 3)) ~"Third", 
-                         month %in% c( 4, 5, 6) & year==2021 ~"Vaccine Rollout", 
-                         month %in% c(7,8, 9 , 10) & year==2021~"Fourth"))%>%
-  group_by(nola_geo, wave, svi_q) %>%
-    summarise(months=as.numeric(case_when(wave=="First"~4, 
-                                          wave=="Second"~4,
-                                          wave=="Third" ~5, 
-                                          wave=="Vaccine Rollout"~3, 
-                                          wave=="Fourth"~4)),
-             cases=sum(cases),
-            tests=sum(tests),
-            positives=sum(positives),
-            pop=sum(estimate_tract_pop_2018)) %>%
-  mutate(testing_rate=(tests/months)/pop*10000,
-         incidence_rate=(cases/months)/pop*10000,
-         positivity_ratio=(positives/months)/(tests/months)*100) %>%
-  select(nola_geo, wave, svi_q, testing_rate, incidence_rate, positivity_ratio) %>%
-  pivot_longer(cols=c(testing_rate, positivity_ratio, incidence_rate))%>%
-  mutate(name=factor(name, levels=c("testing_rate",
-                                    "incidence_rate", 
-                                    "positivity_ratio"),
-                     labels = c("Testing", "Incidence", "Positivity"))) %>%
-  mutate(wave=factor(wave, levels=c("First", "Second", "Third", "Vaccine Rollout", "Fourth"),
-                      labels=c("First",
-                               "Second",
-                               "Third", 
-                               "Vaccine Rollout", 
-                               "Fourth"))) %>% 
-  filter(name!="Testing")
-
-figure3<-ggplot(quintiles %>% filter(!is.na(wave)), aes(x=svi_q, y=value)) +
-  geom_line(aes(color=nola_geo)) +
-  geom_point(aes(fill=nola_geo), color="black", pch=21, size=4)+
-  facet_grid(name~wave, scales="free_y")+
-  scale_color_brewer(type="qual", palette=2, name="")+
-  scale_fill_brewer(type="qual", palette=2, name="")+
-  scale_x_continuous(breaks=1:10)+
-  scale_y_continuous(limits=c(0, NA))+
-  labs(x="Social Vulnerability Index Quintile (1=lowest, 5=highest vulnerability)",
-       y="Monthly Incidence rate per 10,000 or positivity ratio (%)")+
-  theme_bw()+
-  theme(axis.text=element_text(color="black", size=14),
-        axis.title=element_text(color="black", size=16, face="bold"),
-        strip.background = element_blank(),
-        strip.text =element_text(color="black", size=16, face="bold"),
-        plot.title=element_text(color="black", size=20, face="bold"),
-        legend.position = "bottom",
-        legend.text=element_text(color="black", size=14))
-figure3
-ggsave(figure3, file="Results/Figure3.pdf", width=20, height=10)
-
-ggplotly(figure3)
-
 
 
 # figure 3  by elections
-# election-specific quintiles?
 
 quintiles<-final_tract %>% 
   full_join(elect) %>% 
@@ -394,29 +325,8 @@ quintiles<-full_join(final_tract, quintiles) %>%
                       labels=c("Democrat", "Mixed", "Republican"))) %>% 
   filter(name!="Testing")
 
-figure4<-ggplot(quintiles %>% filter(!is.na(wave)), aes(x=svi_q, y=value)) +
-  geom_line(aes(color=color)) +
-  geom_point(aes(fill=color), color="black", pch=21, size=4)+
-  facet_grid(name~wave, scales="free_y")+
-  scale_color_manual(values=c("blue", "purple", "red"), name="")+
-  scale_fill_manual(values=c("blue", "purple", "red"), name="")+
-  scale_x_continuous(breaks=1:10)+
-  scale_y_continuous(limits=c(0, NA))+
-  labs(x="Social Vulnerability Index Quintile (1=lowest, 5=highest vulnerability)",
-       y="Monthly Incidence rate per 10,000 or positivity ratio (%)")+
-  theme_bw()+
-  theme(axis.text=element_text(color="black", size=14),
-        axis.title=element_text(color="black", size=16, face="bold"),
-        strip.background = element_blank(),
-        strip.text =element_text(color="black", size=16, face="bold"),
-        plot.title=element_text(color="black", size=20, face="bold"),
-        legend.position = "bottom",
-        legend.text=element_text(color="black", size=14))
-figure4
-ggsave(figure4, file="Results/Figure4.pdf", width=20, height=10)
 
-
-# NEw Figure 3
+# Figure 3
 svi<-final_tract %>%ungroup() %>% 
   filter(!duplicated(tract_fips)) %>% 
   mutate(svi=as.numeric(RPL_THEMES-min(RPL_THEMES, na.rm=T)),
@@ -451,10 +361,10 @@ res_nola_geo<-final_tract %>%
     
     logRII_incid<-summary(m_incid)$coefficients["svi",1]
     selogrii_incid<-summary(m_incid)$coefficients["svi",2]
-    serii_incid<-deltamethod(~exp(x1),logRII,selogrii^2)
+    serii_incid<-deltamethod(~exp(x1),logRII_incid,selogrii_incid^2)
     logRII_posit<-summary(m_posit)$coefficients["svi",1]
     selogrii_posit<-summary(m_posit)$coefficients["svi",2]
-    serii_posit<-deltamethod(~exp(x1),logRII,selogrii^2)
+    serii_posit<-deltamethod(~exp(x1),logRII_posit,selogrii_posit^2)
     # compile
     bind_rows(data.frame(est=logRII_incid,
                          se=selogrii_incid) %>% 
