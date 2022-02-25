@@ -88,7 +88,7 @@ figure1a<-ggplot(weekly_elect, aes(x=date_endweek1, y=cases, fill=color))+
                expand=expansion(mult=0))+
   scale_y_continuous(expand=expansion(mult=0)) +
   scale_fill_manual(values=c("blue", "purple", "red"), name="")+
-  labs(x="", y="New Case", title="Weekly Cases in Louisiana")+
+  labs(x="", y="New Cases", title="Weekly Cases in Louisiana")+
   guides(fill=F)+
   theme_bw()+
   theme(axis.text=element_text(color="black", size=14),
@@ -382,7 +382,7 @@ res_nola_geo<-final_tract %>%
             cases=sum(cases),
             tests=sum(tests),
             positives=sum(positives),
-            pop=sum(estimate_tract_pop_2018)) %>% 
+            pop=sum(tract_pop_2018)) %>% 
   left_join(dispar_exp) %>% 
   group_by(nola_geo,wave) %>% 
   group_modify(~{
@@ -390,16 +390,8 @@ res_nola_geo<-final_tract %>%
     #print(.y$color)
     # incid
     m_incid<-glm.nb(cases~svi+offset(log(pop)), data=.x)
-    mhi_incid<-glm.nb(cases~mhi+offset(log(pop)), data=.x)
-    crowd_incid<-glm.nb(cases~pct_crowded+offset(log(pop)), data=.x)
-    service_incid<-glm.nb(cases~pct_service+offset(log(pop)), data=.x)
-    hs_incid<-glm.nb(cases~pct_lesshs+offset(log(pop)), data=.x)
     # posit
     m_posit<-glm.nb(positives~svi+offset(log(tests)), data=.x %>% filter(tests>0))
-    mhi_posit<-glm.nb(positives~mhi+offset(log(tests)), data=.x %>% filter(tests>0))
-    crowd_posit<-glm.nb(positives~pct_crowded+offset(log(tests)), data=.x %>% filter(tests>0))
-    service_posit<-glm.nb(positives~pct_service+offset(log(tests)), data=.x %>% filter(tests>0))
-    hs_posit<-glm.nb(positives~pct_lesshs+offset(log(tests)), data=.x %>% filter(tests>0))
     #coefficient and se for svi 
     logRII_incid<-summary(m_incid)$coefficients["svi",1]
     selogrii_incid<-summary(m_incid)$coefficients["svi",2]
@@ -407,15 +399,6 @@ res_nola_geo<-final_tract %>%
     logRII_posit<-summary(m_posit)$coefficients["svi",1]
     selogrii_posit<-summary(m_posit)$coefficients["svi",2]
     serii_posit<-deltamethod(~exp(x1),logRII_posit,selogrii_posit^2)
-    #coefficient and se for mhi 
-    mhi_logRII_incid<-summary(mhi_incid)$coefficients["mhi",1]
-    mhi_selogrii_incid<-summary(mhi_incid)$coefficients["mhi",2]
-    mhi_serii_incid<-deltamethod(~exp(x1),mhi_logRII_incid,mhi_selogrii_incid^2)
-    mhi_logRII_posit<-summary(mhi_posit)$coefficients["mhi",1]
-    mhi_selogrii_posit<-summary(mhi_posit)$coefficients["mhi",2]
-    mhi_serii_posit<-deltamethod(~exp(x1),mhi_logRII_posit,mhi_selogrii_posit^2)
-    
-    
     # compile
     bind_rows(data.frame(est=logRII_incid,
                          se=selogrii_incid) %>% 
@@ -528,7 +511,8 @@ f3b<-ggplot(res_color, aes(x=wave, y=est, group=color)) +
 f3b
 figure3<-arrangeGrob(grobs=list(f3a, f3b), ncol=1)
 ggsave("Results/Figure3_new.pdf", figure3, width=15, height=12.5)
-figure3
+
+ggplotly(f3a)
 
 
 #Appendix Figure 
@@ -1118,7 +1102,7 @@ f3a_pct_lesshs<-ggplot(res_nola_geo_pct_lesshs, aes(x=wave, y=est, group=nola_ge
   scale_color_brewer(type="qual", palette=2, name="")+
   scale_fill_brewer(type="qual", palette=2, name="")+
   scale_y_continuous(trans="log", breaks=2^(-1:4), limits=ylim) +
-  labs(x="Wave", y="Relative Index of Inequality for\n Percent lesshs (95% CI)") +
+  labs(x="Wave", y="Relative Index of Inequality for\n % less than highschool education (95% CI)") +
   guides(fill="none")+
   facet_wrap(~outcome) +
   theme_bw()+
@@ -1141,7 +1125,7 @@ f3b_pct_lesshs<-ggplot(res_color_pct_lesshs, aes(x=wave, y=est, group=color)) +
   scale_color_manual(values=c("blue", "purple", "red"), name="")+
   scale_fill_manual(values=c("blue", "purple", "red"), name="")+
   scale_y_continuous(trans="log", breaks=2^(-1:4), limits=ylim) +
-  labs(x="Wave", y="Relative Index of Inequality for\n Percent lesshs  (95% CI)") +
+  labs(x="Wave", y="Relative Index of Inequality for\n % less than highschool education (95% CI)") +
   guides(fill="none")+
   facet_wrap(~outcome) +
   theme_bw()+
