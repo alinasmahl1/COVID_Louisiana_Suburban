@@ -168,6 +168,7 @@ acs_data<-get_acs(geography="tract",
                   variables=c(tract_pop_2018 = "B01003_001", white_alone="B02001_002", 
                               race_total="B02001_001", mhi = "B19013_001", 
                               ratio_poverty="B05010_001", below_poverty="B05010_010", 
+                              mhi="B19013_001", 
                               ## overcrowding denominator
                                  overcrowd_denom="B25014_001",
                               # #overcrowding 1 and more
@@ -224,7 +225,8 @@ acs_data1<-acs_data %>%
   mutate(tract_fips=as.numeric(tract_fips),
          pct_crowded=((own_1+own_1p5+ own_2+ rent_1+ rent_1p5+rent_2)/overcrowd_denom)*100,
          pct_service = ((food_M+food_F+service_M+service_F)/occ_denom)*100, 
-         pct_hsplus = ((hs+ ged+ college1+ college2+college3+college4+masters+masters2+doct)/educ_denom)*100)
+         pct_hsplus = ((hs+ ged+ college1+ college2+college3+college4+masters+masters2+doct)/educ_denom)*100)%>%
+select(c(tract_fips, tract_pop_2018, mhi, pct_service, pct_crowded, pct_hsplus))
 
 str(acs_data1)estimate
 head(acs_data1)
