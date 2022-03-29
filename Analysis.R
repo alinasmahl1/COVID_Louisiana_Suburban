@@ -128,7 +128,7 @@ ggsave(figure1b, file="Results/Figure1b_elect.pdf", width=15, height=6)
 figure1<-grid.arrange(figure1a,figure1b,
                       ncol = 1, nrow = 2)
 g <- arrangeGrob(figure1a,figure1b,  nrow=2) #generates g
-ggsave(g, file="Results/figure1_elect.pdf", width=10, height=8) #saves g
+ggsave(g, file="Results/figure1_elect.pdf", width=15, height=10) #saves g
 
 
 # figure 2:
@@ -147,7 +147,7 @@ dta_f1b<-final_nola_geo %>%
             cases=sum(cases),
             tests=sum(tests),
             positives=sum(positives),
-            pop=sum(estimate_tract_pop_2018)) %>% 
+            pop=sum(tract_pop_2018)) %>% 
   mutate(testing_rate=(tests/months)/pop*10000,
          incidence_rate=(cases/months)/pop*10000,
          positivity_ratio=(positives/months)/(tests/months)*100) %>% 
@@ -218,7 +218,7 @@ dta_f1b<-final_color %>%
             cases=sum(cases),
             tests=sum(tests),
             positives=sum(positives),
-            pop=sum(estimate_tract_pop_2018)) %>% 
+            pop=sum(tract_pop_2018)) %>% 
   mutate(testing_rate=(tests/months)/pop*10000,
          incidence_rate=(cases/months)/pop*10000,
          positivity_ratio=(positives/months)/(tests/months)*100) %>% 
@@ -305,7 +305,7 @@ quintiles<-full_join(final_tract, quintiles) %>%
             cases=sum(cases),
             tests=sum(tests),
             positives=sum(positives),
-            pop=sum(estimate_tract_pop_2018))%>%
+            pop=sum(tract_pop_2018))%>%
   mutate(testing_rate=(tests/months)/pop*10000,
          incidence_rate=(cases/months)/pop*10000,
          positivity_ratio=(positives/months)/(tests/months)*100)%>% 
@@ -386,7 +386,7 @@ res_nola_geo<-final_tract %>%
   left_join(dispar_exp) %>% 
   group_by(nola_geo,wave) %>% 
   group_modify(~{
-    #.x<-dta %>% filter(nola_geo=="Other Urban", wave=="Fourth")
+    #.x<-ea %>% filter(nola_geo=="Other Urban", wave=="Fourth")
     #print(.y$color)
     # incid
     m_incid<-glm.nb(cases~svi+offset(log(pop)), data=.x)
@@ -435,7 +435,7 @@ res_color<-final_tract %>%
             tests=sum(tests),
             positives=sum(positives),
             pop=sum(tract_pop_2018)) %>% 
-  left_join(svi) %>% 
+  left_join(dispar_exp) %>% 
   group_by(color,wave) %>% 
   group_modify(~{
     #.x<-dta %>% filter(color=="Other Urban", month=="First")
@@ -1140,3 +1140,83 @@ f3b_pct_lesshs
 figure3_pct_lesshs<-arrangeGrob(grobs=list(f3a_pct_lesshs, f3b_pct_lesshs), ncol=1)
 ggsave("Results/Figure3_new_pct_lesshs.pdf", figure3_pct_lesshs, width=15, height=12.5)
 figure3_pct_lesshs
+
+res_nola_geo_all<-bind_rows(res_nola_geo_pct_lesshs %>% 
+            mutate(exp="lesshs"),
+          res_nola_geo_pct_crowded %>% 
+            mutate(exp="crowded"),
+          res_nola_geo_pct_service %>% 
+            mutate(exp="service"),
+          res_nola_geo_mhi %>% 
+            mutate(exp="mhi"),
+          res_nola_geo %>% 
+            mutate(exp="svi")) %>% 
+  mutate(exp=factor(exp, 
+                    levels=c("svi", "mhi", "lesshs", "crowded", "service"),
+                    labels=c("SVI", "MHI", "<HS", "Crowded", "Service")))
+
+res_color_all<-bind_rows(res_color_pct_lesshs %>% 
+                              mutate(exp="lesshs"),
+                            res_color_pct_crowded %>% 
+                              mutate(exp="crowded"),
+                            res_color_pct_service %>% 
+                              mutate(exp="service"),
+                            res_color_mhi %>% 
+                              mutate(exp="mhi"),
+                            res_color %>% 
+                              mutate(exp="svi")) %>% 
+  mutate(exp=factor(exp, 
+                    levels=c("svi", "mhi", "lesshs", "crowded", "service"),
+                    labels=c("SVI", "MHI", "<HS", "Crowded", "Service")))
+
+figure3_all_geo<-ggplot(res_nola_geo_all, aes(x=wave, y=est, group=exp)) +
+  geom_hline(yintercept = 1, lty=2)+
+  #geom_ribbon(aes(fill=nola_geo, ymin=lci, ymax=uci), alpha=0.3)+
+  geom_linerange(aes(color=exp, ymin=lci, ymax=uci), position=position_dodge(width=0.2))+
+  geom_line(aes(color=exp), position=position_dodge(width=0.2)) +
+  geom_point(aes(fill=exp), color="black", pch=21,size=3, position=position_dodge(width=0.2))+
+  #scale_color_brewer(type="qual", palette=2, name="")+
+  #scale_fill_brewer(type="qual", palette=2, name="")+
+  scale_y_continuous(trans="log", breaks=2^(-1:4), limits=ylim) +
+  labs(x="Wave", y="Relative Index of Inequality for\n all variables (95% CI)",
+       color="", fill="") +
+  guides(color="none")+
+  facet_grid(nola_geo~outcome) +
+  theme_bw()+
+  theme(axis.text=element_text(color="black", size=14),
+        axis.title=element_text(color="black", size=14, face="bold"),
+        plot.title=element_text(color="black", size=20, face="bold"),
+        strip.background = element_blank(),
+        strip.text =element_text(color="black", size=16, face="bold"),
+        legend.position = "bottom",
+        legend.text=element_text(color="black", size=14))
+
+figure3_all_geo
+ggsave("Results/Figure3_all_geo.pdf", figure3_all_geo, width=15, height=12.5)
+
+
+
+figure3_all_color<-ggplot(res_color_all, aes(x=wave, y=est, group=exp)) +
+  geom_hline(yintercept = 1, lty=2)+
+  #geom_ribbon(aes(fill=nola_geo, ymin=lci, ymax=uci), alpha=0.3)+
+  geom_linerange(aes(color=exp, ymin=lci, ymax=uci), position=position_dodge(width=0.2))+
+  geom_line(aes(color=exp), position=position_dodge(width=0.2)) +
+  geom_point(aes(fill=exp), color="black", pch=21,size=3, position=position_dodge(width=0.2))+
+  #scale_color_brewer(type="qual", palette=2, name="")+
+  #scale_fill_brewer(type="qual", palette=2, name="")+
+  scale_y_continuous(trans="log", breaks=2^(-1:4), limits=ylim) +
+  labs(x="Wave", y="Relative Index of Inequality for\n all variables (95% CI)",
+       color="", fill="") +
+  guides(color="none")+
+  facet_grid(color~outcome) +
+  theme_bw()+
+  theme(axis.text=element_text(color="black", size=14),
+        axis.title=element_text(color="black", size=14, face="bold"),
+        plot.title=element_text(color="black", size=20, face="bold"),
+        strip.background = element_blank(),
+        strip.text =element_text(color="black", size=16, face="bold"),
+        legend.position = "bottom",
+        legend.text=element_text(color="black", size=14))
+
+ggsave("Results/Figure3_all_color.pdf", figure3_all_color, width=15, height=12.5)
+figure3_all_color
