@@ -466,57 +466,6 @@ ylim<-c(
   max(c(max(res_nola_geo$uci), max(res_color$uci)))
 )
 
-f3a<-ggplot(res_nola_geo, aes(x=wave, y=est, group=nola_geo)) +
-  geom_hline(yintercept = 1, lty=2)+
-  #geom_ribbon(aes(fill=nola_geo, ymin=lci, ymax=uci), alpha=0.3)+
-  geom_linerange(aes(color=nola_geo, ymin=lci, ymax=uci), position=position_dodge(width=0.2))+
-  geom_line(aes(color=nola_geo), position=position_dodge(width=0.2)) +
-  geom_point(aes(fill=nola_geo), color="black", pch=21,size=4, position=position_dodge(width=0.2))+
-  scale_color_brewer(type="qual", palette=2, name="")+
-  scale_fill_brewer(type="qual", palette=2, name="")+
-  scale_y_continuous(trans="log", breaks=2^(-1:4), limits=ylim) +
-  labs(x="Wave", y="Relative Index of Inequality for the\nSocial Vulnerability Index (95% CI)") +
-  guides(fill="none")+
-  facet_wrap(~outcome) +
-  theme_bw()+
-  theme(axis.text=element_text(color="black", size=14),
-        axis.title=element_text(color="black", size=14, face="bold"),
-        plot.title=element_text(color="black", size=20, face="bold"),
-        strip.background = element_blank(),
-        strip.text =element_text(color="black", size=16, face="bold"),
-        legend.position = "bottom",
-        legend.text=element_text(color="black", size=14))
-
-f3a
-f3b<-ggplot(res_color, aes(x=wave, y=est, group=color)) +
-  geom_hline(yintercept = 1, lty=2)+
-  #geom_ribbon(aes(fill=color, ymin=lci, ymax=uci), alpha=0.3)+
-  geom_linerange(aes(color=color, ymin=lci, ymax=uci), position=position_dodge(width=0.2))+
-  geom_line(aes(color=color), position=position_dodge(width=0.2)) +
-  geom_point(aes(fill=color), color="black", pch=21,size=4, position=position_dodge(width=0.2))+
-  scale_color_manual(values=c("blue", "purple", "red"), name="")+
-  scale_fill_manual(values=c("blue", "purple", "red"), name="")+
-  scale_y_continuous(trans="log", breaks=2^(-1:4), limits=ylim) +
-  labs(x="Wave", y="Relative Index of Inequality for the\nSocial Vulnerability Index (95% CI)") +
-  guides(fill="none")+
-  facet_wrap(~outcome) +
-  theme_bw()+
-  theme(axis.text=element_text(color="black", size=14),
-        axis.title=element_text(color="black", size=14, face="bold"),
-        plot.title=element_text(color="black", size=20, face="bold"),
-        strip.background = element_blank(),
-        strip.text =element_text(color="black", size=16, face="bold"),
-        legend.position = "bottom",
-        legend.text=element_text(color="black", size=14))
-f3b
-figure3<-arrangeGrob(grobs=list(f3a, f3b), ncol=1)
-ggsave("Results/Figure3_new.pdf", figure3, width=15, height=12.5)
-
-ggplotly(f3a)
-
-
-#Appendix Figure 
-#repeat figure3 with MHI 
 
 #Run RII for MHI by geography
 res_nola_geo_mhi<-final_tract %>% 
@@ -616,64 +565,7 @@ res_color_mhi<-final_tract %>%
          color=factor(color, levels=c("blue", "purple", "red"),
                       labels=c("Democrat", "Mixed", "Republican")))
 
-
-
-#set boundaries
-ylim<-c(
-  min(c(min(res_nola_geo$lci), min(res_color$lci))),
-  max(c(max(res_nola_geo$uci), max(res_color$uci)))
-)
-
-#figure3 with MHI
-f3a_mhi<-ggplot(res_nola_geo_mhi, aes(x=wave, y=est, group=nola_geo)) +
-  geom_hline(yintercept = 1, lty=2)+
-  #geom_ribbon(aes(fill=nola_geo, ymin=lci, ymax=uci), alpha=0.3)+
-  geom_linerange(aes(color=nola_geo, ymin=lci, ymax=uci), position=position_dodge(width=0.2))+
-  geom_line(aes(color=nola_geo), position=position_dodge(width=0.2)) +
-  geom_point(aes(fill=nola_geo), color="black", pch=21,size=4, position=position_dodge(width=0.2))+
-  scale_color_brewer(type="qual", palette=2, name="")+
-  scale_fill_brewer(type="qual", palette=2, name="")+
-  scale_y_continuous(trans="log", breaks=2^(-1:4), limits=ylim) +
-  labs(x="Wave", y="Relative Index of Inequality for \n Median Household Income (inverted) (95% CI)") +
-  guides(fill="none")+
-  facet_wrap(~outcome) +
-  theme_bw()+
-  theme(axis.text=element_text(color="black", size=14),
-        axis.title=element_text(color="black", size=14, face="bold"),
-        plot.title=element_text(color="black", size=20, face="bold"),
-        strip.background = element_blank(),
-        strip.text =element_text(color="black", size=16, face="bold"),
-        legend.position = "bottom",
-        legend.text=element_text(color="black", size=14))
-
-f3a_mhi
-
-f3b_mhi<-ggplot(res_color_mhi, aes(x=wave, y=est, group=color)) +
-  geom_hline(yintercept = 1, lty=2)+
-  #geom_ribbon(aes(fill=color, ymin=lci, ymax=uci), alpha=0.3)+
-  geom_linerange(aes(color=color, ymin=lci, ymax=uci), position=position_dodge(width=0.2))+
-  geom_line(aes(color=color), position=position_dodge(width=0.2)) +
-  geom_point(aes(fill=color), color="black", pch=21,size=4, position=position_dodge(width=0.2))+
-  scale_color_manual(values=c("blue", "purple", "red"), name="")+
-  scale_fill_manual(values=c("blue", "purple", "red"), name="")+
-  scale_y_continuous(trans="log", breaks=2^(-1:4), limits=ylim) +
-  labs(x="Wave", y="Relative Index of Inequality for \n Median Household Income (Inverted) (95% CI)") +
-  guides(fill="none")+
-  facet_wrap(~outcome) +
-  theme_bw()+
-  theme(axis.text=element_text(color="black", size=14),
-        axis.title=element_text(color="black", size=14, face="bold"),
-        plot.title=element_text(color="black", size=20, face="bold"),
-        strip.background = element_blank(),
-        strip.text =element_text(color="black", size=16, face="bold"),
-        legend.position = "bottom",
-        legend.text=element_text(color="black", size=14))
-f3b_mhi
-figure3_mhi<-arrangeGrob(grobs=list(f3a_mhi, f3b_mhi), ncol=1)
-ggsave("Results/Figure3_new_mhi.pdf", figure3_mhi, width=15, height=12.5)
-figure3_mhi
-
-#######Repeat Figure 3 with pct_crowded
+####### Run RII w/ pct_crowded by geo
 
 res_nola_geo_pct_crowded<-final_tract %>% 
   mutate(wave=case_when(month %in% c(3, 4, 5, 6) & year==2020 ~"First", 
@@ -774,62 +666,8 @@ res_color_pct_crowded<-final_tract %>%
 
 
 
-#set boundaries
-ylim<-c(
-  min(c(min(res_nola_geo$lci), min(res_color$lci))),
-  max(c(max(res_nola_geo$uci), max(res_color$uci)))
-)
 
-#figure3 with pct_crowded
-f3a_pct_crowded<-ggplot(res_nola_geo_pct_crowded, aes(x=wave, y=est, group=nola_geo)) +
-  geom_hline(yintercept = 1, lty=2)+
-  #geom_ribbon(aes(fill=nola_geo, ymin=lci, ymax=uci), alpha=0.3)+
-  geom_linerange(aes(color=nola_geo, ymin=lci, ymax=uci), position=position_dodge(width=0.2))+
-  geom_line(aes(color=nola_geo), position=position_dodge(width=0.2)) +
-  geom_point(aes(fill=nola_geo), color="black", pch=21,size=4, position=position_dodge(width=0.2))+
-  scale_color_brewer(type="qual", palette=2, name="")+
-  scale_fill_brewer(type="qual", palette=2, name="")+
-  scale_y_continuous(trans="log", breaks=2^(-1:4), limits=ylim) +
-  labs(x="Wave", y="Relative Index of Inequality for\n Percent Crowded (95% CI)") +
-  guides(fill="none")+
-  facet_wrap(~outcome) +
-  theme_bw()+
-  theme(axis.text=element_text(color="black", size=14),
-        axis.title=element_text(color="black", size=14, face="bold"),
-        plot.title=element_text(color="black", size=20, face="bold"),
-        strip.background = element_blank(),
-        strip.text =element_text(color="black", size=16, face="bold"),
-        legend.position = "bottom",
-        legend.text=element_text(color="black", size=14))
-
-f3a_pct_crowded
-
-f3b_pct_crowded<-ggplot(res_color_pct_crowded, aes(x=wave, y=est, group=color)) +
-  geom_hline(yintercept = 1, lty=2)+
-  #geom_ribbon(aes(fill=color, ymin=lci, ymax=uci), alpha=0.3)+
-  geom_linerange(aes(color=color, ymin=lci, ymax=uci), position=position_dodge(width=0.2))+
-  geom_line(aes(color=color), position=position_dodge(width=0.2)) +
-  geom_point(aes(fill=color), color="black", pch=21,size=4, position=position_dodge(width=0.2))+
-  scale_color_manual(values=c("blue", "purple", "red"), name="")+
-  scale_fill_manual(values=c("blue", "purple", "red"), name="")+
-  scale_y_continuous(trans="log", breaks=2^(-1:4), limits=ylim) +
-  labs(x="Wave", y="Relative Index of Inequality for\n Percent Crowded  (95% CI)") +
-  guides(fill="none")+
-  facet_wrap(~outcome) +
-  theme_bw()+
-  theme(axis.text=element_text(color="black", size=14),
-        axis.title=element_text(color="black", size=14, face="bold"),
-        plot.title=element_text(color="black", size=20, face="bold"),
-        strip.background = element_blank(),
-        strip.text =element_text(color="black", size=16, face="bold"),
-        legend.position = "bottom",
-        legend.text=element_text(color="black", size=14))
-f3b_pct_crowded
-figure3_pct_crowded<-arrangeGrob(grobs=list(f3a_pct_crowded, f3b_pct_crowded), ncol=1)
-ggsave("Results/Figure3_new_pct_crowded.pdf", figure3_pct_crowded, width=15, height=12.5)
-figure3_pct_crowded
-
-#Repeat FIgure 3 with Pct service
+#Run RII with Pct service by geo
 
 res_nola_geo_pct_service<-final_tract %>% 
   mutate(wave=case_when(month %in% c(3, 4, 5, 6) & year==2020 ~"First", 
@@ -930,62 +768,8 @@ res_color_pct_service<-final_tract %>%
 
 
 
-#set boundaries
-ylim<-c(
-  min(c(min(res_nola_geo$lci), min(res_color$lci))),
-  max(c(max(res_nola_geo$uci), max(res_color$uci)))
-)
 
-#figure3 with pct_service
-f3a_pct_service<-ggplot(res_nola_geo_pct_service, aes(x=wave, y=est, group=nola_geo)) +
-  geom_hline(yintercept = 1, lty=2)+
-  #geom_ribbon(aes(fill=nola_geo, ymin=lci, ymax=uci), alpha=0.3)+
-  geom_linerange(aes(color=nola_geo, ymin=lci, ymax=uci), position=position_dodge(width=0.2))+
-  geom_line(aes(color=nola_geo), position=position_dodge(width=0.2)) +
-  geom_point(aes(fill=nola_geo), color="black", pch=21,size=4, position=position_dodge(width=0.2))+
-  scale_color_brewer(type="qual", palette=2, name="")+
-  scale_fill_brewer(type="qual", palette=2, name="")+
-  scale_y_continuous(trans="log", breaks=2^(-1:4), limits=ylim) +
-  labs(x="Wave", y="Relative Index of Inequality for\n Percent Service (95% CI)") +
-  guides(fill="none")+
-  facet_wrap(~outcome) +
-  theme_bw()+
-  theme(axis.text=element_text(color="black", size=14),
-        axis.title=element_text(color="black", size=14, face="bold"),
-        plot.title=element_text(color="black", size=20, face="bold"),
-        strip.background = element_blank(),
-        strip.text =element_text(color="black", size=16, face="bold"),
-        legend.position = "bottom",
-        legend.text=element_text(color="black", size=14))
-
-f3a_pct_service
-
-f3b_pct_service<-ggplot(res_color_pct_service, aes(x=wave, y=est, group=color)) +
-  geom_hline(yintercept = 1, lty=2)+
-  #geom_ribbon(aes(fill=color, ymin=lci, ymax=uci), alpha=0.3)+
-  geom_linerange(aes(color=color, ymin=lci, ymax=uci), position=position_dodge(width=0.2))+
-  geom_line(aes(color=color), position=position_dodge(width=0.2)) +
-  geom_point(aes(fill=color), color="black", pch=21,size=4, position=position_dodge(width=0.2))+
-  scale_color_manual(values=c("blue", "purple", "red"), name="")+
-  scale_fill_manual(values=c("blue", "purple", "red"), name="")+
-  scale_y_continuous(trans="log", breaks=2^(-1:4), limits=ylim) +
-  labs(x="Wave", y="Relative Index of Inequality for\n Percent Service  (95% CI)") +
-  guides(fill="none")+
-  facet_wrap(~outcome) +
-  theme_bw()+
-  theme(axis.text=element_text(color="black", size=14),
-        axis.title=element_text(color="black", size=14, face="bold"),
-        plot.title=element_text(color="black", size=20, face="bold"),
-        strip.background = element_blank(),
-        strip.text =element_text(color="black", size=16, face="bold"),
-        legend.position = "bottom",
-        legend.text=element_text(color="black", size=14))
-f3b_pct_service
-figure3_pct_service<-arrangeGrob(grobs=list(f3a_pct_service, f3b_pct_service), ncol=1)
-ggsave("Results/Figure3_new_pct_service.pdf", figure3_pct_service, width=15, height=12.5)
-figure3_pct_service
-
-####Repeat Figure 3 with Pct Less than HIgh school
+####Run RII with Pct Less than HIgh school
 
 res_nola_geo_pct_lesshs<-final_tract %>% 
   mutate(wave=case_when(month %in% c(3, 4, 5, 6) & year==2020 ~"First", 
@@ -1086,61 +870,7 @@ res_color_pct_lesshs<-final_tract %>%
 
 
 
-#set boundaries
-ylim<-c(
-  min(c(min(res_nola_geo$lci), min(res_color$lci))),
-  max(c(max(res_nola_geo$uci), max(res_color$uci)))
-)
-
-#figure3 with pct_lesshs
-f3a_pct_lesshs<-ggplot(res_nola_geo_pct_lesshs, aes(x=wave, y=est, group=nola_geo)) +
-  geom_hline(yintercept = 1, lty=2)+
-  #geom_ribbon(aes(fill=nola_geo, ymin=lci, ymax=uci), alpha=0.3)+
-  geom_linerange(aes(color=nola_geo, ymin=lci, ymax=uci), position=position_dodge(width=0.2))+
-  geom_line(aes(color=nola_geo), position=position_dodge(width=0.2)) +
-  geom_point(aes(fill=nola_geo), color="black", pch=21,size=4, position=position_dodge(width=0.2))+
-  scale_color_brewer(type="qual", palette=2, name="")+
-  scale_fill_brewer(type="qual", palette=2, name="")+
-  scale_y_continuous(trans="log", breaks=2^(-1:4), limits=ylim) +
-  labs(x="Wave", y="Relative Index of Inequality for\n % less than highschool education (95% CI)") +
-  guides(fill="none")+
-  facet_wrap(~outcome) +
-  theme_bw()+
-  theme(axis.text=element_text(color="black", size=14),
-        axis.title=element_text(color="black", size=14, face="bold"),
-        plot.title=element_text(color="black", size=20, face="bold"),
-        strip.background = element_blank(),
-        strip.text =element_text(color="black", size=16, face="bold"),
-        legend.position = "bottom",
-        legend.text=element_text(color="black", size=14))
-
-f3a_pct_lesshs
-
-f3b_pct_lesshs<-ggplot(res_color_pct_lesshs, aes(x=wave, y=est, group=color)) +
-  geom_hline(yintercept = 1, lty=2)+
-  #geom_ribbon(aes(fill=color, ymin=lci, ymax=uci), alpha=0.3)+
-  geom_linerange(aes(color=color, ymin=lci, ymax=uci), position=position_dodge(width=0.2))+
-  geom_line(aes(color=color), position=position_dodge(width=0.2)) +
-  geom_point(aes(fill=color), color="black", pch=21,size=4, position=position_dodge(width=0.2))+
-  scale_color_manual(values=c("blue", "purple", "red"), name="")+
-  scale_fill_manual(values=c("blue", "purple", "red"), name="")+
-  scale_y_continuous(trans="log", breaks=2^(-1:4), limits=ylim) +
-  labs(x="Wave", y="Relative Index of Inequality for\n % less than highschool education (95% CI)") +
-  guides(fill="none")+
-  facet_wrap(~outcome) +
-  theme_bw()+
-  theme(axis.text=element_text(color="black", size=14),
-        axis.title=element_text(color="black", size=14, face="bold"),
-        plot.title=element_text(color="black", size=20, face="bold"),
-        strip.background = element_blank(),
-        strip.text =element_text(color="black", size=16, face="bold"),
-        legend.position = "bottom",
-        legend.text=element_text(color="black", size=14))
-f3b_pct_lesshs
-figure3_pct_lesshs<-arrangeGrob(grobs=list(f3a_pct_lesshs, f3b_pct_lesshs), ncol=1)
-ggsave("Results/Figure3_new_pct_lesshs.pdf", figure3_pct_lesshs, width=15, height=12.5)
-figure3_pct_lesshs
-
+#Combine RII"s for all measures 
 res_nola_geo_all<-bind_rows(res_nola_geo_pct_lesshs %>% 
             mutate(exp="lesshs"),
           res_nola_geo_pct_crowded %>% 
@@ -1168,6 +898,8 @@ res_color_all<-bind_rows(res_color_pct_lesshs %>%
   mutate(exp=factor(exp, 
                     levels=c("svi", "mhi", "lesshs", "crowded", "service"),
                     labels=c("SVI", "MHI", "<HS", "Crowded", "Service")))
+###############################################################################
+#FIGURE 3
 
 figure3_all_geo<-ggplot(res_nola_geo_all, aes(x=wave, y=est, group=exp)) +
   geom_hline(yintercept = 1, lty=2)+
@@ -1192,11 +924,11 @@ figure3_all_geo<-ggplot(res_nola_geo_all, aes(x=wave, y=est, group=exp)) +
         legend.text=element_text(color="black", size=14))
 
 figure3_all_geo
-ggsave("Results/Figure3_all_geo.pdf", figure3_all_geo, width=15, height=12.5)
+ggsave("Results/Figure3.pdf", figure3_all_geo, width=15, height=12.5)
 
 
 
-figure3_all_color<-ggplot(res_color_all, aes(x=wave, y=est, group=exp)) +
+figure4_all_color<-ggplot(res_color_all, aes(x=wave, y=est, group=exp)) +
   geom_hline(yintercept = 1, lty=2)+
   #geom_ribbon(aes(fill=nola_geo, ymin=lci, ymax=uci), alpha=0.3)+
   geom_linerange(aes(color=exp, ymin=lci, ymax=uci), position=position_dodge(width=0.2))+
@@ -1218,5 +950,5 @@ figure3_all_color<-ggplot(res_color_all, aes(x=wave, y=est, group=exp)) +
         legend.position = "bottom",
         legend.text=element_text(color="black", size=14))
 
-ggsave("Results/Figure3_all_color.pdf", figure3_all_color, width=15, height=12.5)
+ggsave("Results/Figure4.pdf", figure4_all_color, width=15, height=12.5)
 figure3_all_color
